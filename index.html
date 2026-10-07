@@ -9,96 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<style>
-
-:root{
-  --bg:#0A0A0C; --sf:#131316; --bd:#2A2A30; --tx:#ECECEF; --mu:#A0A0AA; --ac:#FF8A1F;
-  --sans:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:84px}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.6;font-size:16px}
-a{color:inherit;text-decoration:none}
-a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
-.w{max-width:1160px;margin:0 auto;padding:0 28px}
-.row{display:flex;flex-wrap:wrap;gap:24px;align-items:center}
-.mu{color:var(--mu)}
-.mono{font-family:var(--mono)}
-.card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:22px}
-.btn{display:inline-flex;align-items:center;min-height:46px;padding:0 22px;border-radius:999px;font-weight:500;border:1px solid var(--bd);transition:border-color .15s,color .15s}
-.btn:hover{border-color:var(--ac)}
-.pri{background:var(--ac);color:#0A0A0C;border-color:var(--ac)}
-.pri:hover{filter:brightness(1.08)}
-.sec{border-top:1px solid var(--bd);padding:56px 0}
-.lbl{color:var(--ac);font-size:13px;margin-bottom:8px}
-h2{margin:0 0 22px;font-size:30px;line-height:1.2;font-weight:600}
-
-/* шапка */
-.top{position:sticky;top:0;z-index:10;background:rgba(10,10,12,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--bd)}
-.top .w{display:flex;align-items:center;justify-content:space-between;min-height:68px;gap:16px}
-.logo{font-weight:600;font-size:18px;white-space:nowrap}
-.logo span{color:var(--ac)}
-.nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
-.nav::-webkit-scrollbar{display:none}
-.nav a{padding:0 14px;min-height:44px;display:flex;align-items:center;color:var(--mu);white-space:nowrap;border-radius:10px}
-.nav a:hover{color:var(--tx)}
-
-/* hero */
-.hero{display:flex;flex-wrap:wrap;gap:48px;align-items:center;padding-top:64px;padding-bottom:64px}
-.hero .txt{flex:1 1 440px}
-h1{margin:6px 0 10px;font-size:clamp(40px,6vw,68px);line-height:1.05;font-weight:600;letter-spacing:-0.02em}
-h1 span{color:var(--ac)}
-.role{font-size:22px;margin-bottom:14px}
-.hero p{max-width:48ch;margin:0 0 26px}
-.status{display:flex;align-items:center;gap:10px;margin-top:22px;font-size:14px;color:var(--mu)}
-.status i{width:8px;height:8px;border-radius:50%;background:#3DDC97}
-.social{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
-.social .btn{font-family:var(--mono);font-size:13px}
-.art{flex:1 1 360px;display:flex;justify-content:center}
-.stage{position:relative;width:min(100%,440px);aspect-ratio:1/1}
-.ring{position:absolute;inset:6%;border-radius:50%;border:2px solid var(--ac);opacity:.8}
-.stage img{position:absolute;inset:11%;width:78%;height:78%;border-radius:50%;object-fit:cover;object-position:40% 40%;border:1px solid var(--bd);background:var(--sf)}
-.chip{position:absolute;padding:8px 14px;border-radius:12px;background:var(--sf);border:1px solid var(--bd);font-family:var(--mono);font-size:13px}
-
-/* обо мне */
-.two{display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start}
-.facts{display:grid;gap:12px}
-.facts div{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
-
-/* дашборды */
-.dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
-.dash a{border-top:3px solid var(--c);transition:transform .15s,border-color .15s}
-.dash a:hover{transform:translateY(-3px)}
-.dash b{font-size:18px}
-.dash p{margin:8px 0 14px;font-size:15px;color:var(--mu)}
-.dash span{font-family:var(--mono);font-size:13px;color:var(--c)}
-
-/* навыки */
-.skill{display:flex;justify-content:space-between;gap:8px}
-.bar{height:6px;border-radius:3px;background:var(--bd);margin:8px 0 18px}
-.bar i{display:block;height:100%;border-radius:3px;background:var(--ac)}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:12px}
-.tile{border:1px solid var(--bd);border-radius:12px;padding:18px 8px;text-align:center;background:var(--sf);font-family:var(--mono);font-size:13px}
-
-/* форма */
-form{display:grid;gap:12px}
-label{font-size:14px;color:var(--mu)}
-.in{width:100%;min-height:46px;background:var(--sf);border:1px solid var(--bd);border-radius:10px;color:var(--tx);padding:0 14px;font:inherit}
-textarea.in{padding:12px 14px;resize:vertical}
-.in:focus{border-color:var(--ac)}
-button.btn{cursor:pointer;font:inherit;font-weight:500;justify-self:start}
-
-footer{border-top:1px solid var(--bd);padding:24px 0;font-size:14px}
-footer .w{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
-
-@media (max-width:760px){
-  .logo,.top .btn{display:none}
-  .top .w{justify-content:flex-start}
-  .hero{padding-top:36px}
-  .chip{font-size:12px;padding:6px 10px}
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -138,10 +49,10 @@ footer .w{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
       <div class="stage">
         <div class="ring"></div>
         <img src="photo.jpg" alt="Иллюстрация: автор портфолио машет рукой на фоне экранов с графиками" width="1400" height="1400">
-        <div class="chip" style="top:6%;left:0">Python</div>
-        <div class="chip" style="top:14%;right:-2%">PostgreSQL</div>
-        <div class="chip" style="bottom:12%;left:-2%">Power BI</div>
-        <div class="chip" style="bottom:4%;right:6%">Chart.js</div>
+        <div class="chip" style="top:6%;left:0"><img src="assets/icons/python.svg" alt="" width="16" height="16" loading="lazy">Python</div>
+        <div class="chip" style="top:14%;right:-2%"><img src="assets/icons/postgresql.svg" alt="" width="16" height="16" loading="lazy">PostgreSQL</div>
+        <div class="chip" style="bottom:12%;left:-2%"><img src="assets/icons/powerbi.svg" alt="" width="16" height="16" loading="lazy">Power BI</div>
+        <div class="chip" style="bottom:4%;right:6%"><img src="assets/icons/chartdotjs.svg" alt="" width="16" height="16" loading="lazy">Chart.js</div>
       </div>
     </div>
   </section>
@@ -188,7 +99,18 @@ footer .w{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
         <div class="skill"><span>JavaScript и Chart.js</span><span class="mono mu">[ур.]</span></div><div class="bar"><i style="width:70%"></i></div>
       </div>
       <div class="tiles" style="flex:1 1 360px">
-        <div class="tile">Pandas</div><div class="tile">NumPy</div><div class="tile">SciPy</div><div class="tile">PostgreSQL</div><div class="tile">Supabase</div><div class="tile">Power BI</div><div class="tile">Excel</div><div class="tile">Chart.js</div><div class="tile">D3.js</div><div class="tile">GitHub Actions</div>
+        <div class="tile"><img src="assets/icons/python.svg" alt="" width="28" height="28" loading="lazy">Python</div>
+        <div class="tile"><img src="assets/icons/pandas.svg" alt="" width="28" height="28" loading="lazy">Pandas</div>
+        <div class="tile"><img src="assets/icons/numpy.svg" alt="" width="28" height="28" loading="lazy">NumPy</div>
+        <div class="tile"><img src="assets/icons/scipy.svg" alt="" width="28" height="28" loading="lazy">SciPy</div>
+        <div class="tile"><img src="assets/icons/postgresql.svg" alt="" width="28" height="28" loading="lazy">PostgreSQL</div>
+        <div class="tile"><img src="assets/icons/supabase.svg" alt="" width="28" height="28" loading="lazy">Supabase</div>
+        <div class="tile"><img src="assets/icons/powerbi.svg" alt="" width="28" height="28" loading="lazy">Power BI</div>
+        <div class="tile"><img src="assets/icons/excel.svg" alt="" width="28" height="28" loading="lazy">Excel</div>
+        <div class="tile"><img src="assets/icons/javascript.svg" alt="" width="28" height="28" loading="lazy">JavaScript</div>
+        <div class="tile"><img src="assets/icons/chartdotjs.svg" alt="" width="28" height="28" loading="lazy">Chart.js</div>
+        <div class="tile"><img src="assets/icons/d3.svg" alt="" width="28" height="28" loading="lazy">D3.js</div>
+        <div class="tile"><img src="assets/icons/githubactions.svg" alt="" width="28" height="28" loading="lazy">GitHub Actions</div>
       </div>
     </div>
   </section>
