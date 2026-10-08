@@ -28,6 +28,7 @@
 </header>
 
 <main>
+  <!-- Итоги матчей -->
   <section class="w head">
     <div class="lbl">Спорт</div>
     <h1>NBA: игровая ночь</h1>
@@ -35,35 +36,31 @@
     <div class="results" id="results" role="group" aria-label="Матчи ночи"></div>
   </section>
 
-  <!-- Сцена: слева лучшие, по центру карта бросков, справа статистика выборки -->
+  <!-- СЦЕНА: Три колонки -->
   <section class="w stage">
 
-    <aside class="card side side-left" aria-label="Лучшие игроки и связки">
-      <h2>Лучшее за ночь</h2>
+    <!-- СЛЕВА: Топы -->
+    <aside class="side side-left" aria-label="Лучшие игроки и связки">
+      <h2>Топ вечера</h2>
       <p class="mu note" id="leftNote"></p>
       <div class="seg" role="group" aria-label="Что показать" id="leftTabs">
         <button type="button" data-view="players" aria-pressed="true">Игроки</button>
-        <button type="button" data-view="2" aria-pressed="false">Двойки</button>
+        <button type="button" data-view="2" aria-pressed="false">Связки (2)</button>
         <button type="button" data-view="3" aria-pressed="false">Тройки</button>
         <button type="button" data-view="5" aria-pressed="false">Пятёрки</button>
       </div>
       <ol class="rank-list" id="leftList"></ol>
     </aside>
 
+    <!-- ЦЕНТР: Карта бросков -->
     <div class="card map-card">
       <div class="map-top">
-        <h2>Карта бросков</h2>
-        <div class="seg" role="group" aria-label="Режим карты" id="modes">
+        <h2>Heatmap</h2>
+        <div class="seg" role="group" aria-label="Режим карты" id="modes" style="width: auto; margin-bottom: 0;">
           <button type="button" data-mode="density" aria-pressed="true">Частота</button>
           <button type="button" data-mode="eff" aria-pressed="false">Эффективность</button>
           <button type="button" data-mode="dots" aria-pressed="false">Броски</button>
         </div>
-      </div>
-      <div class="filters">
-        <div><label for="fGame">Матч</label><select class="in" id="fGame"></select></div>
-        <div><label for="fTeam">Команда</label><select class="in" id="fTeam"></select></div>
-        <div><label for="fPlayer">Игрок</label><select class="in" id="fPlayer"></select></div>
-        <div><label for="fQuarter">Четверть</label><select class="in" id="fQuarter"></select></div>
       </div>
       <div class="court" id="court">
         <canvas id="heat" width="1000" height="940" role="img" aria-label="Карта бросков"></canvas>
@@ -84,25 +81,35 @@
       <div class="legend" id="legend"></div>
     </div>
 
-    <aside class="card side side-right" aria-label="Статистика бросков">
-      <h2>Статистика бросков</h2>
+    <!-- СПРАВА: Фильтры и Стата -->
+    <aside class="side side-right" aria-label="Статистика бросков">
+      <h2>Статистика</h2>
+      
+      <!-- Фильтры перенесены сюда -->
+      <div class="filters">
+        <label>Матч<select class="in" id="fGame"></select></label>
+        <label>Команда<select class="in" id="fTeam"></select></label>
+        <label>Игрок<select class="in" id="fPlayer"></select></label>
+        <label>Четверть<select class="in" id="fQuarter"></select></label>
+      </div>
+
       <p class="mu note" id="selLabel"></p>
       <div class="kpis" id="kpis"></div>
+      
       <h3>По зонам</h3>
       <div class="scroll"><table id="zones"></table></div>
+      
       <h3>Игроки в выборке</h3>
       <div class="scroll"><table id="players"></table></div>
     </aside>
 
   </section>
 
-  <!-- Новости: компактно, под всем -->
-  <section class="w">
-    <div class="card">
-      <h2>Новости NBA</h2>
-      <p class="mu note" id="newsNote"></p>
-      <ul class="news" id="news"></ul>
-    </div>
+  <!-- СНИЗУ: Новости -->
+  <section class="w news-section">
+    <h2>Последние новости</h2>
+    <p class="mu note" id="newsNote"></p>
+    <ul class="news" id="news"></ul>
   </section>
 </main>
 
