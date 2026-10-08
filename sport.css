@@ -1,5 +1,7 @@
 /* Страница спорта: акцент раздела синий, остальное берётся из style.css */
 body.sport{--ac:#4DA3FF;--pink:#FF5C8A;--green:#3DDC97}
+/* страница шире остальных: три колонки требуют места */
+body.sport .w{max-width:1480px}
 select.in{color-scheme:dark;appearance:auto;padding-right:10px}
 .head{padding-top:48px;padding-bottom:24px}
 .head h1{font-size:clamp(34px,5vw,52px);margin:0 0 10px;line-height:1.1;font-weight:600;letter-spacing:-.02em}
@@ -24,7 +26,6 @@ section.w{margin-bottom:20px}
 .seg button:hover:not([aria-pressed=true]){color:var(--tx)}
 
 /* карта бросков */
-.map-card{max-width:760px;margin:0 auto}
 .map-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
 .map-top h2{margin:0}
 .court{position:relative;width:100%;aspect-ratio:500/470;border-radius:12px;overflow:hidden;background:#0E141C;border:1px solid var(--bd)}
@@ -36,13 +37,12 @@ section.w{margin-bottom:20px}
 .legend .bar{width:160px;height:8px;border-radius:4px}
 
 /* фильтры и KPI */
-.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0 18px}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:0 0 14px}
 .filters label{display:block;margin-bottom:4px}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
-.kpi{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:14px}
-.kpi .v{font-family:var(--mono);font-size:26px;line-height:1.2}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.kpi{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:12px}
+.kpi .v{font-family:var(--mono);font-size:22px;line-height:1.2}
 .kpi .l{font-size:13px;color:var(--mu);margin-top:2px}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:28px}
 .scroll{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--bd);white-space:nowrap}
@@ -52,27 +52,38 @@ td.mono,.mono{font-family:var(--mono)}
 .share{display:block;height:5px;border-radius:3px;background:var(--bd);margin-top:5px;min-width:60px}
 .share i{display:block;height:100%;border-radius:3px;background:var(--ac)}
 
-/* два блока в ряд */
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
-.top5,.lineups{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
-.top5 li,.lineups li{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:center;padding:12px 14px;background:var(--bg);border:1px solid var(--bd);border-radius:12px}
-.rank{font-family:var(--mono);font-size:20px;color:var(--ac)}
+/* сцена: слева лучшие, по центру карта, справа статистика */
+.stage{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,1.7fr) minmax(280px,1fr);gap:20px;align-items:start}
+.stage>.card{min-width:0;margin:0}
+.side h2{margin-bottom:4px}
+.side .seg{display:flex;width:100%}
+.side .seg button{flex:1;padding:0 6px;font-size:13px}
+.seg button[hidden]{display:none}
+.rank-list{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+.rank-list li{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;padding:10px 12px;background:var(--bg);border:1px solid var(--bd);border-radius:12px}
+#players td:first-child{white-space:normal}
+.rank{font-family:var(--mono);font-size:18px;color:var(--ac)}
 .who b{display:block;font-weight:500}
 .who span{font-size:13px;color:var(--mu)}
-.score{font-family:var(--mono);font-size:24px;text-align:right}
+.score{font-family:var(--mono);font-size:20px;text-align:right}
 .score small{display:block;font-size:12px;color:var(--mu)}
-.lineups .who b{font-size:15px;line-height:1.35}
+.rank-list .who b{font-size:14px;line-height:1.35}
 
-/* новости */
-.news{list-style:none;margin:10px 0 0;padding:0}
-.news li{padding:12px 0;border-bottom:1px solid var(--bd)}
-.news li:last-child{border-bottom:0}
-.news a{display:block;font-weight:500}
+/* новости: компактная сетка */
+.news{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.news li{padding:10px 12px;background:var(--bg);border:1px solid var(--bd);border-radius:12px}
+.news a{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:14px;font-weight:500;line-height:1.35}
 .news a:hover{color:var(--ac)}
-.news .meta{font-size:13px;color:var(--mu);margin-top:3px}
+.news .meta{font-size:12px;color:var(--mu);margin-top:4px}
 .error{color:var(--pink);font-size:14px;margin:10px 0}
 
-@media (max-width:860px){
-  .grid2,.two-col{grid-template-columns:1fr}
+@media (max-width:1180px){
+  /* карта на всю ширину, под ней две колонки */
+  .stage{grid-template-columns:1fr 1fr}
+  .map-card{grid-column:1/-1;grid-row:1}
+}
+@media (max-width:760px){
+  .stage{grid-template-columns:1fr}
+  .side-right{order:2} .side-left{order:3}
   .head{padding-top:30px}
 }
