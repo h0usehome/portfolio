@@ -47,6 +47,18 @@ h1 span{color:var(--ac)}
 .ring{position:absolute;inset:6%;border-radius:50%;border:2px solid var(--ac);opacity:.8}
 .stage img{position:absolute;inset:11%;width:78%;height:78%;border-radius:50%;object-fit:cover;object-position:40% 40%;border:1px solid var(--bd);background:var(--sf)}
 .chip{position:absolute;display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:12px;background:var(--sf);border:1px solid var(--bd);font-family:var(--mono);font-size:13px}
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Отступ между иконкой и текстом */
+}
+
+/* При желании можно сделать иконки чуть крупнее самого текста */
+.btn i {
+    font-size: 1.2em; 
+}
+
 
 .chip svg{width:16px;height:16px;display:block}
 
