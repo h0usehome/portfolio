@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NBA: игровая ночь | Bogdan Pinashin</title>
+<meta name="description" content="Карта бросков, лучшие игроки, связки и новости последней игровой ночи NBA.">
+<meta name="theme-color" content="#0A0A0C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="sport.css">
+</head>
+<body class="sport">
+
+<header class="top">
+  <div class="w">
+    <a class="logo" href="index.html">Bogdan<span>.data</span></a>
+    <nav class="nav" aria-label="Основное меню">
+      <a href="index.html#about">Обо мне</a>
+      <a href="index.html#dashboards">Дашборды</a>
+      <a href="index.html#skills">Навыки</a>
+      <a href="index.html#contacts">Контакты</a>
+    </nav>
+    <a class="btn" href="index.html#dashboards" style="border-color:var(--ac);color:var(--ac)">Все дашборды</a>
+  </div>
+</header>
+
+<main>
+  <section class="w head">
+    <div class="lbl">Спорт</div>
+    <h1>NBA: игровая ночь</h1>
+    <p class="mu" id="subtitle">Загрузка данных…</p>
+    <div class="results" id="results" role="group" aria-label="Матчи ночи"></div>
+  </section>
+
+  <!-- Центральный блок: карта бросков -->
+  <section class="w">
+    <div class="card map-card">
+      <div class="map-top">
+        <h2>Карта бросков</h2>
+        <div class="seg" role="group" aria-label="Режим карты" id="modes">
+          <button type="button" data-mode="density" aria-pressed="true">Частота</button>
+          <button type="button" data-mode="eff" aria-pressed="false">Эффективность</button>
+          <button type="button" data-mode="dots" aria-pressed="false">Броски</button>
+        </div>
+      </div>
+      <div class="court" id="court">
+        <canvas id="heat" width="1000" height="940" role="img" aria-label="Карта бросков"></canvas>
+        <svg viewBox="0 0 500 470" aria-hidden="true" class="lines">
+          <g fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="1" width="498" height="468"/>
+            <rect x="170" y="1" width="160" height="190"/>
+            <circle cx="250" cy="190" r="60"/>
+            <path d="M210 52 A40 40 0 0 0 290 52"/>
+            <path d="M30 1 V141.5 A237.5 237.5 0 0 0 470 141.5 V1"/>
+            <path d="M220 40 H280"/>
+            <circle cx="250" cy="52" r="7.5"/>
+            <path d="M190 470 A60 60 0 0 1 310 470"/>
+          </g>
+        </svg>
+        <div class="empty" id="mapEmpty" hidden>Нет бросков для выбранных фильтров</div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+
+  <!-- Фильтры и статистика бросков -->
+  <section class="w">
+    <div class="card">
+      <h2>Статистика бросков</h2>
+      <div class="filters">
+        <div><label for="fGame">Матч</label><select class="in" id="fGame"></select></div>
+        <div><label for="fTeam">Команда</label><select class="in" id="fTeam"></select></div>
+        <div><label for="fPlayer">Игрок</label><select class="in" id="fPlayer"></select></div>
+        <div><label for="fQuarter">Четверть</label><select class="in" id="fQuarter"></select></div>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="two-col">
+        <div>
+          <h3>По зонам</h3>
+          <div class="scroll"><table id="zones"></table></div>
+        </div>
+        <div>
+          <h3>Игроки в выборке</h3>
+          <div class="scroll"><table id="players"></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Лучшие игроки и связки -->
+  <section class="w grid2">
+    <div class="card">
+      <h2>Лучшие игроки ночи</h2>
+      <p class="mu note">Очки + передачи − потери</p>
+      <ol class="top5" id="top5"></ol>
+    </div>
+    <div class="card">
+      <h2>Лучшие связки</h2>
+      <p class="mu note">Сезонные данные команд, игравших этой ночью. Очки за 100 владений, от 100 минут вместе</p>
+      <div class="seg" role="group" aria-label="Размер связки" id="lineupTabs">
+        <button type="button" data-size="2" aria-pressed="true">Пары</button>
+        <button type="button" data-size="3" aria-pressed="false">Тройки</button>
+      </div>
+      <ol class="lineups" id="lineups"></ol>
+    </div>
+  </section>
+
+  <!-- Новости -->
+  <section class="w">
+    <div class="card">
+      <h2>Новости NBA</h2>
+      <p class="mu note" id="newsNote"></p>
+      <ul class="news" id="news"></ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="w mu">
+    <span>Данные: Basketball-Reference, RSS ESPN и CBS Sports. Обновляется после игровой ночи.</span>
+    <span>Python · Supabase · GitHub Actions</span>
+  </div>
+</footer>
+
+<script src="sport.js"></script>
+</body>
+</html>
