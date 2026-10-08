@@ -14,12 +14,13 @@ const ZONES = [
   { label: '10–15 фт', min: 10, max: 16 }, { label: '16–22 фт', min: 16, max: 23 },
   { label: '23+ фт', min: 23, max: Infinity },
 ];
+const NEWS_LIMIT = 6;   // сколько новостей показывать
 const DEMO = new URLSearchParams(location.search).has('demo');
 
 const state = {
   games: [], shots: [], top: [], lineups: [], news: [],
   f: { game: 'all', team: 'all', player: 'all', quarter: 'all' },
-  mode: 'density', lineupSize: 2,
+  mode: 'density', leftView: 'players',
 };
 
 /* ============================== Утилиты ============================== */
@@ -213,7 +214,18 @@ function renderFilters() {
   f.quarter = fillSelect('#fQuarter', [['all', 'Все четверти'], ...qs.map((q) => [String(q), q <= 4 ? `${q}-я` : `Овертайм ${q - 4}`])], f.quarter);
 }
 
+function selectionLabel() {
+  const f = state.f, parts = [];
+  const g = state.games.find((x) => x.game_id === f.game);
+  parts.push(g ? `${g.visitor_abbr} @ ${g.home_abbr}` : 'Все матчи');
+  if (f.team !== 'all') parts.push(f.team);
+  if (f.player !== 'all') { const p = state.shots.find((x) => x.player_id === f.player); if (p) parts.push(p.player_name); }
+  if (f.quarter !== 'all') { const q = Number(f.quarter); parts.push(q <= 4 ? `${q}-я четверть` : `овертайм ${q - 4}`); }
+  return parts.join(' · ');
+}
+
 function renderStats() {
+  $('#selLabel').textContent = selectionLabel();
   const arr = filteredShots(), s = summarize(arr);
   const kpis = [['Броски', s.n], ['Попадания', s.m], ['FG%', pct(s.fg)], ['3P%', pct(s.tp)], ['eFG%', pct(s.efg)], ['Очки/бросок', fmt(s.pps, 2)], ['Средняя дистанция', s.avgd == null ? '—' : fmt(s.avgd, 1) + ' фт']];
   $('#kpis').replaceChildren(...kpis.map(([l, v]) => h('div', { class: 'kpi' }, h('div', { class: 'v', text: String(v) }), h('div', { class: 'l', text: l }))));
@@ -238,30 +250,44 @@ function renderStats() {
   pt.append(pb);
 }
 
-function renderTop() {
-  const ol = $('#top5'); ol.replaceChildren();
-  if (!state.top.length) return ol.append(h('li', { class: 'mu', text: 'Нет данных' }));
-  state.top.forEach((p, i) => ol.append(h('li', {},
+function rankItem(i, title, sub, big, small) {
+  return h('li', {},
     h('span', { class: 'rank', text: i + 1 }),
-    h('div', { class: 'who' }, h('b', { text: p.player_name }), h('span', { text: `${p.team_abbr} · ${num(p.pts)} очк. · ${num(p.ast)} перед. · ${num(p.tov)} пот.` })),
-    h('div', { class: 'score' }, String(num(p.score)), h('small', { text: 'баллов' })))));
+    h('div', { class: 'who' }, h('b', { text: title }), h('span', { text: sub })),
+    h('div', { class: 'score' }, big, h('small', { text: small })));
 }
 
-function renderLineups() {
-  const ol = $('#lineups'); ol.replaceChildren();
-  const rows = state.lineups.filter((l) => num(l.lineup_type) === state.lineupSize);
+function renderLeft() {
+  const tabs = [...document.querySelectorAll('#leftTabs button')];
+  // вкладки связок, по которым в базе нет данных, скрываем
+  for (const b of tabs) {
+    if (b.dataset.view === 'players') continue;
+    b.hidden = !state.lineups.some((l) => num(l.lineup_type) === Number(b.dataset.view));
+  }
+  const cur = tabs.find((b) => b.dataset.view === String(state.leftView));
+  if (!cur || cur.hidden) state.leftView = 'players';
+  tabs.forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === String(state.leftView)));
+
+  const ol = $('#leftList'); ol.replaceChildren();
+  if (state.leftView === 'players') {
+    $('#leftNote').textContent = 'Очки + передачи − потери';
+    if (!state.top.length) return ol.append(h('li', { class: 'mu', text: 'Нет данных' }));
+    state.top.forEach((p, i) => ol.append(rankItem(i, p.player_name,
+      `${p.team_abbr} · ${num(p.pts)} очк. · ${num(p.ast)} перед. · ${num(p.tov)} пот.`, String(num(p.score)), 'баллов')));
+    return;
+  }
+  $('#leftNote').textContent = 'Сезонные данные команд, игравших этой ночью. Очки за 100 владений, от 100 минут вместе';
+  const rows = state.lineups.filter((l) => num(l.lineup_type) === Number(state.leftView)).slice(0, 8);
   if (!rows.length) return ol.append(h('li', { class: 'mu', text: 'Нет данных' }));
-  rows.forEach((l, i) => ol.append(h('li', {},
-    h('span', { class: 'rank', text: i + 1 }),
-    h('div', { class: 'who' }, h('b', { text: l.lineup }), h('span', { text: `${l.team_abbr} · ${fmt(l.minutes_played, 0)} мин · +/- ${num(l.plus_minus)}` })),
-    h('div', { class: 'score' }, fmt(l.pts_per_100_poss, 1), h('small', { text: 'очк./100' })))));
+  rows.forEach((l, i) => ol.append(rankItem(i, l.lineup,
+    `${l.team_abbr} · ${fmt(l.minutes_played, 0)} мин · +/- ${num(l.plus_minus)}`, fmt(l.pts_per_100_poss, 1), 'очк./100')));
 }
 
 function renderNews() {
   const ul = $('#news'); ul.replaceChildren();
   const day = Date.now() - 24 * 3600 * 1000;
   const fresh = state.news.filter((n) => new Date(n.published_at).getTime() >= day);
-  const list = fresh.length ? fresh : state.news.slice(0, 10);
+  const list = (fresh.length ? fresh : state.news).slice(0, NEWS_LIMIT);
   $('#newsNote').textContent = !state.news.length ? 'Новостей пока нет' : fresh.length ? 'За последние 24 часа' : 'За последние сутки новостей нет, показаны самые свежие';
   const rtf = new Intl.RelativeTimeFormat('ru', { numeric: 'auto' });
   for (const n of list) {
@@ -310,7 +336,7 @@ function demoData() {
   const top = [['Игрок LAL-1', 'LAL', 34, 11, 3], ['Игрок BOS-1', 'BOS', 29, 9, 2], ['Игрок DEN-2', 'DEN', 27, 12, 4], ['Игрок GSW-1', 'GSW', 31, 6, 2], ['Игрок NYK-1', 'NYK', 28, 7, 3]]
     .map(([player_name, team_abbr, pts, ast, tov]) => ({ player_name, team_abbr, pts, ast, tov, score: pts + ast - tov })).sort((a, b) => b.score - a.score);
   const lineups = [];
-  [2, 3].forEach((size) => ['LAL', 'BOS', 'GSW', 'DEN', 'NYK'].forEach((t, i) => lineups.push({ team_abbr: t, lineup_type: size, minutes_played: 600 - i * 70, plus_minus: 120 - i * 18, pts_per_100_poss: 128 - i * 3.1 - size,
+  [2, 3, 5].forEach((size) => ['LAL', 'BOS', 'GSW', 'DEN', 'NYK'].forEach((t, i) => lineups.push({ team_abbr: t, lineup_type: size, minutes_played: 600 - i * 70, plus_minus: 120 - i * 18, pts_per_100_poss: 128 - i * 3.1 - size,
     lineup: Array.from({ length: size }, (_, k) => `Игрок${k + 1}`).join(' / ') })));
   const now = Date.now();
   const news = [['Тренер объявил состав на следующую игру', 'ESPN', 2], ['Лидер лиги по передачам пропустит матч из-за травмы', 'CBS Sports', 5], ['Клубы обсуждают обмен перед дедлайном', 'ESPN', 9], ['Новичок обновил рекорд по очкам', 'CBS Sports', 20]]
@@ -325,10 +351,9 @@ async function init() {
     document.querySelectorAll('#modes button').forEach((x) => x.setAttribute('aria-pressed', x === b));
     drawMap();
   });
-  document.querySelectorAll('#lineupTabs button').forEach((b) => b.onclick = () => {
-    state.lineupSize = Number(b.dataset.size);
-    document.querySelectorAll('#lineupTabs button').forEach((x) => x.setAttribute('aria-pressed', x === b));
-    renderLineups();
+  document.querySelectorAll('#leftTabs button').forEach((b) => b.onclick = () => {
+    state.leftView = b.dataset.view;
+    renderLeft();
   });
   $('#fGame').onchange = (e) => setFilter('game', e.target.value);
   $('#fTeam').onchange = (e) => setFilter('team', e.target.value);
@@ -349,6 +374,6 @@ async function init() {
     const failed = Object.keys(jobs).filter((_, i) => res[i].status === 'rejected');
     if (failed.length) $('#subtitle').after(h('p', { class: 'error', text: `Не удалось загрузить: ${failed.join(', ')}. Проверьте sql/nba_views.sql и права anon.` }));
   }
-  renderSubtitle(); renderAll(); renderTop(); renderLineups(); renderNews();
+  renderSubtitle(); renderAll(); renderLeft(); renderNews();
 }
 init();

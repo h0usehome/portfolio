@@ -35,8 +35,21 @@
     <div class="results" id="results" role="group" aria-label="Матчи ночи"></div>
   </section>
 
-  <!-- Центральный блок: карта бросков -->
-  <section class="w">
+  <!-- Сцена: слева лучшие, по центру карта бросков, справа статистика выборки -->
+  <section class="w stage">
+
+    <aside class="card side side-left" aria-label="Лучшие игроки и связки">
+      <h2>Лучшее за ночь</h2>
+      <p class="mu note" id="leftNote"></p>
+      <div class="seg" role="group" aria-label="Что показать" id="leftTabs">
+        <button type="button" data-view="players" aria-pressed="true">Игроки</button>
+        <button type="button" data-view="2" aria-pressed="false">Двойки</button>
+        <button type="button" data-view="3" aria-pressed="false">Тройки</button>
+        <button type="button" data-view="5" aria-pressed="false">Пятёрки</button>
+      </div>
+      <ol class="rank-list" id="leftList"></ol>
+    </aside>
+
     <div class="card map-card">
       <div class="map-top">
         <h2>Карта бросков</h2>
@@ -45,6 +58,12 @@
           <button type="button" data-mode="eff" aria-pressed="false">Эффективность</button>
           <button type="button" data-mode="dots" aria-pressed="false">Броски</button>
         </div>
+      </div>
+      <div class="filters">
+        <div><label for="fGame">Матч</label><select class="in" id="fGame"></select></div>
+        <div><label for="fTeam">Команда</label><select class="in" id="fTeam"></select></div>
+        <div><label for="fPlayer">Игрок</label><select class="in" id="fPlayer"></select></div>
+        <div><label for="fQuarter">Четверть</label><select class="in" id="fQuarter"></select></div>
       </div>
       <div class="court" id="court">
         <canvas id="heat" width="1000" height="940" role="img" aria-label="Карта бросков"></canvas>
@@ -64,51 +83,20 @@
       </div>
       <div class="legend" id="legend"></div>
     </div>
-  </section>
 
-  <!-- Фильтры и статистика бросков -->
-  <section class="w">
-    <div class="card">
+    <aside class="card side side-right" aria-label="Статистика бросков">
       <h2>Статистика бросков</h2>
-      <div class="filters">
-        <div><label for="fGame">Матч</label><select class="in" id="fGame"></select></div>
-        <div><label for="fTeam">Команда</label><select class="in" id="fTeam"></select></div>
-        <div><label for="fPlayer">Игрок</label><select class="in" id="fPlayer"></select></div>
-        <div><label for="fQuarter">Четверть</label><select class="in" id="fQuarter"></select></div>
-      </div>
+      <p class="mu note" id="selLabel"></p>
       <div class="kpis" id="kpis"></div>
-      <div class="two-col">
-        <div>
-          <h3>По зонам</h3>
-          <div class="scroll"><table id="zones"></table></div>
-        </div>
-        <div>
-          <h3>Игроки в выборке</h3>
-          <div class="scroll"><table id="players"></table></div>
-        </div>
-      </div>
-    </div>
+      <h3>По зонам</h3>
+      <div class="scroll"><table id="zones"></table></div>
+      <h3>Игроки в выборке</h3>
+      <div class="scroll"><table id="players"></table></div>
+    </aside>
+
   </section>
 
-  <!-- Лучшие игроки и связки -->
-  <section class="w grid2">
-    <div class="card">
-      <h2>Лучшие игроки ночи</h2>
-      <p class="mu note">Очки + передачи − потери</p>
-      <ol class="top5" id="top5"></ol>
-    </div>
-    <div class="card">
-      <h2>Лучшие связки</h2>
-      <p class="mu note">Сезонные данные команд, игравших этой ночью. Очки за 100 владений, от 100 минут вместе</p>
-      <div class="seg" role="group" aria-label="Размер связки" id="lineupTabs">
-        <button type="button" data-size="2" aria-pressed="true">Пары</button>
-        <button type="button" data-size="3" aria-pressed="false">Тройки</button>
-      </div>
-      <ol class="lineups" id="lineups"></ol>
-    </div>
-  </section>
-
-  <!-- Новости -->
+  <!-- Новости: компактно, под всем -->
   <section class="w">
     <div class="card">
       <h2>Новости NBA</h2>
