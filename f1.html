@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Формула 1: последняя гонка | Bogdan Pinashin</title>
+<meta name="description" content="Темп гонки по кругам, позиции, пит-стопы, чемпионат и новости последнего Гран-при Формулы 1.">
+<meta name="theme-color" content="#0A0A0C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="sport.css">
+<link rel="stylesheet" href="f1.css">
+</head>
+<body class="sport f1">
+
+<header class="top">
+  <div class="w">
+    <a class="logo" href="index.html">Bogdan<span>.data</span></a>
+    <nav class="nav" aria-label="Основное меню">
+      <a href="index.html#about">Обо мне</a>
+      <a href="index.html#dashboards">Дашборды</a>
+      <a href="index.html#skills">Навыки</a>
+      <a href="index.html#contacts">Контакты</a>
+    </nav>
+    <a class="btn" href="index.html#dashboards" style="border-color:var(--ac);color:var(--ac)">Все дашборды</a>
+  </div>
+</header>
+
+<main>
+  <section class="w head">
+    <div class="lbl">Спорт · Формула 1</div>
+    <h1 id="title">Формула 1: последняя гонка</h1>
+    <p class="mu" id="subtitle">Загрузка данных…</p>
+    <div class="results" id="results" role="group" aria-label="Подиум"></div>
+  </section>
+
+  <section class="w board">
+
+    <!-- СЛЕВА: Топы -->
+    <aside class="side side-left" aria-label="Лучшие пилоты, круги и пит-стопы">
+      <h2>Топ гонки</h2>
+      <p class="mu note" id="leftNote"></p>
+      <div class="seg" role="group" aria-label="Что показать" id="leftTabs">
+        <button type="button" data-view="drivers" aria-pressed="true">Пилоты</button>
+        <button type="button" data-view="laps" aria-pressed="false">Круги</button>
+        <button type="button" data-view="pits" aria-pressed="false">Стопы</button>
+        <button type="button" data-view="standings" aria-pressed="false">Зачёт</button>
+      </div>
+      <ol class="rank-list" id="leftList"></ol>
+    </aside>
+
+    <!-- ЦЕНТР: Heatmap гонки -->
+    <div class="card map-card">
+      <div class="map-top">
+        <h2 id="chartTitle">Темп гонки</h2>
+        <div class="seg" role="group" aria-label="Режим графика" id="modes" style="width: auto; margin-bottom: 0;">
+          <button type="button" data-mode="heat" aria-pressed="true">Heatmap</button>
+          <button type="button" data-mode="pos" aria-pressed="false">Позиции</button>
+          <button type="button" data-mode="gap" aria-pressed="false">Отрыв</button>
+        </div>
+      </div>
+      <div class="chart" id="chart">
+        <canvas id="cv" role="img" aria-label="График гонки"></canvas>
+        <div class="tip" id="tip" hidden></div>
+        <div class="empty" id="mapEmpty" hidden>Нет данных о кругах для этой гонки</div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <!-- СПРАВА: Фильтры и статистика -->
+    <aside class="side side-right" aria-label="Статистика гонки">
+      <h2>Статистика</h2>
+      <div class="filters">
+        <label>Команда<select class="in" id="fTeam"></select></label>
+        <label>Пилот<select class="in" id="fDriver"></select></label>
+        <button type="button" class="reset" id="fReset">Сбросить</button>
+      </div>
+      <p class="mu note" id="selLabel"></p>
+      <div class="kpis" id="kpis"></div>
+
+      <h3>Результаты</h3>
+      <div class="scroll"><table id="resTable"></table></div>
+
+      <h3>Пит-стопы</h3>
+      <div class="scroll"><table id="pitTable"></table></div>
+    </aside>
+  </section>
+
+  <section class="w news-section">
+    <h2>Новости Формулы 1</h2>
+    <p class="mu note" id="newsNote"></p>
+    <ul class="news" id="news"></ul>
+  </section>
+</main>
+
+<footer>
+  <div class="w mu">
+    <span>Данные: Jolpica-F1 (Ergast), RSS Formula1.com, Autosport, ESPN. Обновляется после гонки.</span>
+    <span>Python · Supabase · GitHub Actions</span>
+  </div>
+</footer>
+
+<script src="f1.js"></script>
+</body>
+</html>
