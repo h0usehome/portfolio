@@ -3,18 +3,19 @@
 /* ============================== Настройки ============================== */
 const CFG = {
   url: 'https://xqqeiigpamtegingzjda.supabase.co',
-  // anon-ключ публичный по замыслу: он даёт только то, что разрешено политиками и grant select на view
+  // anon-ключ публичный по замыслу: он даёт только то, что разрешено grant select на view
   key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxcWVpaWdwYW10ZWdpbmd6amRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0MTY2ODgsImV4cCI6MjEwNjk5MjY4OH0.wCma0-5v6fo0iPFM7EHTN4zs3K3Z5zKx-B2yTvmgA6M',
 };
 // Геометрия площадки в координатах Basketball-Reference: 10 px = 1 фут, кольцо около (250, 52).
 // Если карта выглядит сдвинутой, проверьте калибровку запросом из sql/nba_views.sql и поправьте bx, by.
-const COURT = { w: 500, h: 470, bx: 250, by: 52, bin: 10 };
+const COURT = { w: 500, h: 470, bx: 250, by: 52 };
+// Параметры плавности карты: сигма размытия в координатах площадки (px) и шаг расчётной сетки
+const HEAT = { cell: 4, sigmaDensity: 15, sigmaEff: 22, prior: 2.2 };
 const ZONES = [
   { label: '0–3 фт', min: 0, max: 4 }, { label: '4–9 фт', min: 4, max: 10 },
   { label: '10–15 фт', min: 10, max: 16 }, { label: '16–22 фт', min: 16, max: 23 },
   { label: '23+ фт', min: 23, max: Infinity },
 ];
-const NEWS_LIMIT = 6;   // сколько новостей показывать
 const DEMO = new URLSearchParams(location.search).has('demo');
 
 const state = {
@@ -41,6 +42,7 @@ function h(tag, props, ...kids) {
 const fmt = (v, d = 1) => (v == null || Number.isNaN(v) ? '—' : Number(v).toFixed(d));
 const pct = (v) => (v == null ? '—' : (v * 100).toFixed(1) + '%');
 const num = (v) => Number(v) || 0;
+const quarterLabel = (q) => (Number(q) <= 4 ? `${q}-я четверть` : `Овертайм ${q - 4}`);
 
 async function rest(view, query = '') {
   const rows = [], PAGE = 1000;                         // PostgREST отдаёт максимум 1000 строк за запрос
@@ -82,26 +84,28 @@ const canvas = $('#heat');
 const ctx = canvas.getContext('2d');
 const SCALE = canvas.width / COURT.w;
 
-function buildGrid(arr) {
-  const gw = Math.ceil(COURT.w / COURT.bin), gh = Math.ceil(COURT.h / COURT.bin);
-  const cnt = new Float32Array(gw * gh), pts = new Float32Array(gw * gh);
-  for (const s of arr) {
-    const gx = Math.floor(num(s.coord_x) / COURT.bin), gy = Math.floor(num(s.coord_y) / COURT.bin);
-    if (gx < 0 || gx >= gw || gy < 0 || gy >= gh) continue;
-    cnt[gy * gw + gx] += 1;
-    if (s.is_made) pts[gy * gw + gx] += num(s.shot_value);
-  }
-  // гауссово сглаживание: превращает сетку отдельных клеток в плавное пятно
-  const R = 3, sigma = 1.5, k = [];
-  for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) k.push([dx, dy, Math.exp(-(dx * dx + dy * dy) / (2 * sigma * sigma))]);
+/**
+ * Оценка плотности ядром Гаусса: каждый бросок «размазывается» по соседним клеткам в его настоящих координатах.
+ * В отличие от суммирования по крупным клеткам, пятно получается плавным и не зависит от сетки.
+ * Возвращает суммарный вес (sc) и сумму набранных очков (sp) на мелкой сетке.
+ */
+function kde(arr, sigmaPx) {
+  const cell = HEAT.cell, gw = Math.ceil(COURT.w / cell), gh = Math.ceil(COURT.h / cell);
+  const sig = sigmaPx / cell, R = Math.ceil(sig * 3);
+  const k = []; for (let d = -R; d <= R; d++) k.push(Math.exp(-(d * d) / (2 * sig * sig)));
   const sc = new Float32Array(gw * gh), sp = new Float32Array(gw * gh);
-  for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
-    const i = y * gw + x;
-    if (!cnt[i]) continue;
-    for (const [dx, dy, w] of k) {
-      const xx = x + dx, yy = y + dy;
-      if (xx < 0 || xx >= gw || yy < 0 || yy >= gh) continue;
-      sc[yy * gw + xx] += cnt[i] * w; sp[yy * gw + xx] += pts[i] * w;
+  for (const s of arr) {
+    const gx = Math.round(num(s.coord_x) / cell), gy = Math.round(num(s.coord_y) / cell);
+    if (gx < -R || gx > gw + R || gy < -R || gy > gh + R) continue;
+    const val = s.is_made ? num(s.shot_value) : 0;
+    for (let dy = -R; dy <= R; dy++) {
+      const yy = gy + dy; if (yy < 0 || yy >= gh) continue;
+      const wy = k[dy + R];
+      for (let dx = -R; dx <= R; dx++) {
+        const xx = gx + dx; if (xx < 0 || xx >= gw) continue;
+        const w = wy * k[dx + R], i = yy * gw + xx;
+        sc[i] += w; sp[i] += w * val;
+      }
     }
   }
   return { gw, gh, sc, sp };
@@ -112,10 +116,11 @@ function ramp(t) {
   t = Math.max(0, Math.min(1, t));
   for (let i = 1; i < RAMP.length; i++) if (t <= RAMP[i][0]) {
     const [t0, c0] = RAMP[i - 1], [t1, c1] = RAMP[i], u = (t - t0) / (t1 - t0);
-    return c0.map((c, j) => Math.round(c + (c1[j] - c) * u));
+    return c0.map((c, j) => c + (c1[j] - c) * u);
   }
   return RAMP[RAMP.length - 1][1];
 }
+const smooth = (t) => t * t * (3 - 2 * t);                       // smoothstep: мягкое появление и затухание краёв
 
 function drawMap() {
   const arr = filteredShots();
@@ -134,32 +139,41 @@ function drawMap() {
     return renderLegend();
   }
 
-  const { gw, gh, sc, sp } = buildGrid(arr);
+  const eff = state.mode === 'eff';
+  const { gw, gh, sc, sp } = kde(arr, eff ? HEAT.sigmaEff : HEAT.sigmaDensity);
   let max = 0; for (const v of sc) if (v > max) max = v;
+  const avg = summarize(arr).pps || 1;                           // средняя отдача выбранных бросков: точка отсчёта для эффективности
   const off = document.createElement('canvas'); off.width = gw; off.height = gh;
   const octx = off.getContext('2d'), img = octx.createImageData(gw, gh);
   for (let i = 0; i < gw * gh; i++) {
-    const c = sc[i]; if (c < max * 0.04) continue;
+    const c = sc[i], d = c / max;
+    if (d < 0.015) continue;
     let rgb, a;
-    if (state.mode === 'density') { rgb = ramp(c / max); a = Math.min(1, 0.15 + (c / max) * 1.1); }
-    else { const pps = sp[i] / c; rgb = ramp((pps - 0.6) / 0.9); a = Math.min(1, Math.sqrt(c / max) * 1.2); }
-    img.data.set([rgb[0], rgb[1], rgb[2], Math.round(a * 235)], i * 4);
+    if (!eff) {
+      rgb = ramp(Math.pow(d, 0.85));
+      a = smooth(Math.min(1, d / 0.35)) * 0.92;                  // край плавно уходит в прозрачность, без резкой границы
+    } else {
+      // сглаживание к среднему: в редких областях цвет не прыгает из-за пары бросков
+      const pps = (sp[i] + HEAT.prior * avg) / (c + HEAT.prior);
+      rgb = ramp(0.5 + (pps - avg) / (avg * 1.1));
+      a = smooth(Math.min(1, d / 0.3)) * 0.92;
+    }
+    img.data.set([rgb[0], rgb[1], rgb[2], Math.round(a * 255)], i * 4);
   }
   octx.putImageData(img, 0, 0);
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(off, 0, 0, gw * COURT.bin * SCALE, gh * COURT.bin * SCALE);
+  if ('filter' in ctx) ctx.filter = 'blur(3px)';                 // дополнительное сглаживание там, где браузер умеет
+  ctx.drawImage(off, 0, 0, gw * HEAT.cell * SCALE, gh * HEAT.cell * SCALE);
+  if ('filter' in ctx) ctx.filter = 'none';
   renderLegend();
 }
 
 function renderLegend() {
-  const g = (a, b) => `linear-gradient(90deg, rgb(${ramp(0).join()}), rgb(${ramp(.35).join()}), rgb(${ramp(.6).join()}), rgb(${ramp(.8).join()}), rgb(${ramp(1).join()}))`;
   const box = $('#legend'); box.replaceChildren();
-  if (state.mode === 'dots') {
-    box.append(h('span', { text: '○ попадание' }), h('span', { text: '✕ промах' }));
-    return;
-  }
-  const bar = h('span', { class: 'bar' }); bar.style.background = g();
-  const [lo, hi] = state.mode === 'density' ? ['реже', 'чаще'] : ['ниже 0.6', 'выше 1.5 очка за бросок'];
+  if (state.mode === 'dots') { box.append(h('span', { text: '○ попадание' }), h('span', { text: '✕ промах' })); return; }
+  const bar = h('span', { class: 'bar' });
+  bar.style.background = `linear-gradient(90deg, ${[0, .2, .4, .6, .8, 1].map((t) => `rgb(${ramp(t).map(Math.round).join()})`).join(', ')})`;
+  const [lo, hi] = state.mode === 'density' ? ['реже', 'чаще'] : ['хуже среднего', 'лучше среднего'];
   box.append(h('span', { text: lo }), bar, h('span', { text: hi }));
 }
 
@@ -199,49 +213,47 @@ function renderFilters() {
   const f = state.f;
   fillSelect('#fGame', [['all', 'Все матчи'], ...state.games.map((g) => [g.game_id, `${g.visitor_abbr} @ ${g.home_abbr}`])], f.game);
 
-  const gameShots = filteredShots(['team', 'player', 'quarter']);
-  const teams = [...new Set(gameShots.map((s) => s.team_abbr))].sort();
-  f.team = fillSelect('#fTeam', [['all', 'Все команды'], ...teams.map((t) => [t, t])], f.team);
+  const teams = [...new Set(filteredShots(['team', 'player', 'quarter']).map((s) => s.team_abbr))].sort();
+  f.team = fillSelect('#fTeam', [['all', 'Все'], ...teams.map((t) => [t, t])], f.team);
 
   const pl = new Map();
   for (const s of filteredShots(['player', 'quarter'])) {
     const p = pl.get(s.player_id) || { name: s.player_name, n: 0 }; p.n++; pl.set(s.player_id, p);
   }
   const players = [...pl].sort((a, b) => b[1].n - a[1].n);
-  f.player = fillSelect('#fPlayer', [['all', 'Все игроки'], ...players.map(([id, p]) => [id, `${p.name} (${p.n})`])], f.player);
+  f.player = fillSelect('#fPlayer', [['all', 'Все'], ...players.map(([id, p]) => [id, `${p.name} (${p.n})`])], f.player);
 
   const qs = [...new Set(state.shots.map((s) => num(s.quarter)))].sort((a, b) => a - b);
-  f.quarter = fillSelect('#fQuarter', [['all', 'Все четверти'], ...qs.map((q) => [String(q), q <= 4 ? `${q}-я` : `Овертайм ${q - 4}`])], f.quarter);
+  f.quarter = fillSelect('#fQuarter', [['all', 'Все'], ...qs.map((q) => [String(q), quarterLabel(q)])], f.quarter);
 }
 
 function selectionLabel() {
-  const f = state.f, parts = [];
-  const g = state.games.find((x) => x.game_id === f.game);
-  parts.push(g ? `${g.visitor_abbr} @ ${g.home_abbr}` : 'Все матчи');
+  const f = state.f, g = state.games.find((x) => x.game_id === f.game);
+  const parts = [g ? `${g.visitor_abbr} @ ${g.home_abbr}` : 'Все матчи'];
   if (f.team !== 'all') parts.push(f.team);
-  if (f.player !== 'all') { const p = state.shots.find((x) => x.player_id === f.player); if (p) parts.push(p.player_name); }
-  if (f.quarter !== 'all') { const q = Number(f.quarter); parts.push(q <= 4 ? `${q}-я четверть` : `овертайм ${q - 4}`); }
+  if (f.player !== 'all') parts.push(state.shots.find((s) => s.player_id === f.player)?.player_name || f.player);
+  if (f.quarter !== 'all') parts.push(quarterLabel(f.quarter));
   return parts.join(' · ');
 }
 
 function renderStats() {
-  $('#selLabel').textContent = selectionLabel();
   const arr = filteredShots(), s = summarize(arr);
-  const kpis = [['Броски', s.n], ['Попадания', s.m], ['FG%', pct(s.fg)], ['3P%', pct(s.tp)], ['eFG%', pct(s.efg)], ['Очки/бросок', fmt(s.pps, 2)], ['Средняя дистанция', s.avgd == null ? '—' : fmt(s.avgd, 1) + ' фт']];
+  $('#selLabel').textContent = `Выборка: ${selectionLabel()}`;
+  const kpis = [['Попад. / броски', `${s.m}/${s.n}`], ['FG%', pct(s.fg)], ['3P%', pct(s.tp)], ['eFG%', pct(s.efg)], ['Очки / бросок', fmt(s.pps, 2)], ['Дистанция, фт', s.avgd == null ? '—' : fmt(s.avgd, 1)]];
   $('#kpis').replaceChildren(...kpis.map(([l, v]) => h('div', { class: 'kpi' }, h('div', { class: 'v', text: String(v) }), h('div', { class: 'l', text: l }))));
 
-  const zt = $('#zones'); zt.replaceChildren(h('thead', {}, h('tr', {}, ...['Зона', 'Броски', 'FG%', 'Очки/бр.'].map((t) => h('th', { text: t })))));
+  const zt = $('#zones'); zt.replaceChildren(h('thead', {}, h('tr', {}, ...['Зона', 'Броски', 'FG%', 'Оч/бр'].map((t) => h('th', { text: t })))));
   const zb = h('tbody');
   for (const z of ZONES) {
     const zs = summarize(arr.filter((x) => num(x.distance_ft) >= z.min && num(x.distance_ft) < z.max));
     const share = arr.length ? zs.n / arr.length : 0;
     const first = h('td', {}, z.label, h('span', { class: 'share' }, h('i', { style: `width:${(share * 100).toFixed(0)}%` })));
-    zb.append(h('tr', {}, first, h('td', { class: 'mono', text: `${zs.n} (${(share * 100).toFixed(0)}%)` }), h('td', { class: 'mono', text: pct(zs.fg) }), h('td', { class: 'mono', text: fmt(zs.pps, 2) })));
+    zb.append(h('tr', {}, first, h('td', { class: 'mono', text: String(zs.n) }), h('td', { class: 'mono', text: pct(zs.fg) }), h('td', { class: 'mono', text: fmt(zs.pps, 2) })));
   }
   zt.append(zb);
 
   const by = new Map();
-  for (const x of arr) { const k = x.player_id; if (!by.has(k)) by.set(k, { name: x.player_name, team: x.team_abbr, rows: [] }); by.get(k).rows.push(x); }
+  for (const x of arr) { if (!by.has(x.player_id)) by.set(x.player_id, { name: x.player_name, team: x.team_abbr, rows: [] }); by.get(x.player_id).rows.push(x); }
   const rows = [...by.values()].map((p) => ({ ...p, s: summarize(p.rows) })).sort((a, b) => b.s.n - a.s.n).slice(0, 8);
   const pt = $('#players'); pt.replaceChildren(h('thead', {}, h('tr', {}, ...['Игрок', 'Бр.', 'FG%', 'eFG%'].map((t) => h('th', { text: t })))));
   const pb = h('tbody');
@@ -250,51 +262,48 @@ function renderStats() {
   pt.append(pb);
 }
 
-function rankItem(i, title, sub, big, small) {
-  return h('li', {},
-    h('span', { class: 'rank', text: i + 1 }),
-    h('div', { class: 'who' }, h('b', { text: title }), h('span', { text: sub })),
-    h('div', { class: 'score' }, big, h('small', { text: small })));
-}
-
+/** Левая панель: лучшие игроки и лучшие связки (вкладки без данных скрываются). */
 function renderLeft() {
   const tabs = [...document.querySelectorAll('#leftTabs button')];
-  // вкладки связок, по которым в базе нет данных, скрываем
   for (const b of tabs) {
-    if (b.dataset.view === 'players') continue;
-    b.hidden = !state.lineups.some((l) => num(l.lineup_type) === Number(b.dataset.view));
+    const v = b.dataset.view;
+    b.hidden = !(v === 'players' ? state.top.length : state.lineups.some((l) => String(l.lineup_type) === v));
   }
-  const cur = tabs.find((b) => b.dataset.view === String(state.leftView));
-  if (!cur || cur.hidden) state.leftView = 'players';
-  tabs.forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === String(state.leftView)));
+  const visible = tabs.filter((b) => !b.hidden);
+  if (!visible.some((b) => b.dataset.view === state.leftView)) state.leftView = visible[0]?.dataset.view || 'players';
+  tabs.forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === state.leftView));
 
   const ol = $('#leftList'); ol.replaceChildren();
   if (state.leftView === 'players') {
-    $('#leftNote').textContent = 'Очки + передачи − потери';
+    $('#leftNote').textContent = 'Очки + передачи − потери за ночь';
     if (!state.top.length) return ol.append(h('li', { class: 'mu', text: 'Нет данных' }));
-    state.top.forEach((p, i) => ol.append(rankItem(i, p.player_name,
-      `${p.team_abbr} · ${num(p.pts)} очк. · ${num(p.ast)} перед. · ${num(p.tov)} пот.`, String(num(p.score)), 'баллов')));
+    state.top.forEach((p, i) => ol.append(h('li', {},
+      h('span', { class: 'rank', text: i + 1 }),
+      h('div', { class: 'who' }, h('b', { text: p.player_name }), h('span', { text: `${p.team_abbr} · ${num(p.pts)} оч · ${num(p.ast)} аст · ${num(p.tov)} пот` })),
+      h('div', { class: 'score' }, String(num(p.score)), h('small', { text: 'баллов' })))));
     return;
   }
-  $('#leftNote').textContent = 'Сезонные данные команд, игравших этой ночью. Очки за 100 владений, от 100 минут вместе';
-  const rows = state.lineups.filter((l) => num(l.lineup_type) === Number(state.leftView)).slice(0, 8);
+  $('#leftNote').textContent = 'Сезонные данные команд, игравших этой ночью. Очки за 100 владений';
+  const rows = state.lineups.filter((l) => String(l.lineup_type) === state.leftView);
   if (!rows.length) return ol.append(h('li', { class: 'mu', text: 'Нет данных' }));
-  rows.forEach((l, i) => ol.append(rankItem(i, l.lineup,
-    `${l.team_abbr} · ${fmt(l.minutes_played, 0)} мин · +/- ${num(l.plus_minus)}`, fmt(l.pts_per_100_poss, 1), 'очк./100')));
+  rows.forEach((l, i) => ol.append(h('li', {},
+    h('span', { class: 'rank', text: i + 1 }),
+    h('div', { class: 'who' }, h('b', { text: l.lineup }), h('span', { text: `${l.team_abbr} · ${fmt(l.minutes_played, 0)} мин · +/- ${num(l.plus_minus)}` })),
+    h('div', { class: 'score' }, fmt(l.pts_per_100_poss, 1), h('small', { text: 'очк./100' })))));
 }
 
 function renderNews() {
   const ul = $('#news'); ul.replaceChildren();
   const day = Date.now() - 24 * 3600 * 1000;
   const fresh = state.news.filter((n) => new Date(n.published_at).getTime() >= day);
-  const list = (fresh.length ? fresh : state.news).slice(0, NEWS_LIMIT);
+  const list = fresh.length ? fresh : state.news.slice(0, 10);
   $('#newsNote').textContent = !state.news.length ? 'Новостей пока нет' : fresh.length ? 'За последние 24 часа' : 'За последние сутки новостей нет, показаны самые свежие';
   const rtf = new Intl.RelativeTimeFormat('ru', { numeric: 'auto' });
   for (const n of list) {
     const hrs = Math.round((new Date(n.published_at).getTime() - Date.now()) / 3600000);
     const when = Math.abs(hrs) < 48 ? rtf.format(hrs, 'hour') : new Date(n.published_at).toLocaleDateString('ru-RU');
     const safe = /^https?:\/\//.test(n.url) ? n.url : null;           // только http(s)-ссылки
-    ul.append(h('li', {}, h('a', { href: safe, target: '_blank', rel: 'noopener noreferrer', text: n.title }), h('div', { class: 'meta', text: `${n.source || 'Источник'} · ${when}` })));
+    ul.append(h('li', {}, h('a', { href: safe, target: '_blank', rel: 'noopener noreferrer', text: n.title }), h('span', { class: 'meta', text: `${n.source || 'Источник'} · ${when}` })));
   }
 }
 
@@ -336,7 +345,7 @@ function demoData() {
   const top = [['Игрок LAL-1', 'LAL', 34, 11, 3], ['Игрок BOS-1', 'BOS', 29, 9, 2], ['Игрок DEN-2', 'DEN', 27, 12, 4], ['Игрок GSW-1', 'GSW', 31, 6, 2], ['Игрок NYK-1', 'NYK', 28, 7, 3]]
     .map(([player_name, team_abbr, pts, ast, tov]) => ({ player_name, team_abbr, pts, ast, tov, score: pts + ast - tov })).sort((a, b) => b.score - a.score);
   const lineups = [];
-  [2, 3, 5].forEach((size) => ['LAL', 'BOS', 'GSW', 'DEN', 'NYK'].forEach((t, i) => lineups.push({ team_abbr: t, lineup_type: size, minutes_played: 600 - i * 70, plus_minus: 120 - i * 18, pts_per_100_poss: 128 - i * 3.1 - size,
+  [2, 3].forEach((size) => ['LAL', 'BOS', 'GSW', 'DEN', 'NYK'].forEach((t, i) => lineups.push({ team_abbr: t, lineup_type: size, minutes_played: 600 - i * 70, plus_minus: 120 - i * 18, pts_per_100_poss: 128 - i * 3.1 - size,
     lineup: Array.from({ length: size }, (_, k) => `Игрок${k + 1}`).join(' / ') })));
   const now = Date.now();
   const news = [['Тренер объявил состав на следующую игру', 'ESPN', 2], ['Лидер лиги по передачам пропустит матч из-за травмы', 'CBS Sports', 5], ['Клубы обсуждают обмен перед дедлайном', 'ESPN', 9], ['Новичок обновил рекорд по очкам', 'CBS Sports', 20]]
@@ -351,18 +360,15 @@ async function init() {
     document.querySelectorAll('#modes button').forEach((x) => x.setAttribute('aria-pressed', x === b));
     drawMap();
   });
-  document.querySelectorAll('#leftTabs button').forEach((b) => b.onclick = () => {
-    state.leftView = b.dataset.view;
-    renderLeft();
-  });
+  document.querySelectorAll('#leftTabs button').forEach((b) => b.onclick = () => { state.leftView = b.dataset.view; renderLeft(); });
   $('#fGame').onchange = (e) => setFilter('game', e.target.value);
   $('#fTeam').onchange = (e) => setFilter('team', e.target.value);
   $('#fPlayer').onchange = (e) => setFilter('player', e.target.value);
   $('#fQuarter').onchange = (e) => setFilter('quarter', e.target.value);
+  $('#fReset').onclick = () => { state.f = { game: 'all', team: 'all', player: 'all', quarter: 'all' }; renderAll(); };
 
   if (DEMO) {
     Object.assign(state, demoData());
-    $('.head .lbl').textContent = 'Спорт · демо-данные';
   } else {
     // блоки грузятся независимо: сбой одного не ломает остальные
     const jobs = { games: 'v_nba_last_games', shots: 'v_nba_last_shots', top: 'v_nba_top_players', lineups: 'v_nba_best_lineups', news: 'v_nba_news' };

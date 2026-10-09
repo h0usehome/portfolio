@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>NBA: игровая ночь | Bogdan Pinashin</title>
 <meta name="description" content="Карта бросков, лучшие игроки, связки и новости последней игровой ночи NBA.">
 <meta name="theme-color" content="#0A0A0C">
@@ -38,7 +37,7 @@
   </section>
 
   <!-- СЦЕНА: Три колонки -->
-  <section class="w stage">
+  <section class="w board">
 
     <!-- СЛЕВА: Топы -->
     <aside class="side side-left" aria-label="Лучшие игроки и связки">
@@ -46,7 +45,7 @@
       <p class="mu note" id="leftNote"></p>
       <div class="seg" role="group" aria-label="Что показать" id="leftTabs">
         <button type="button" data-view="players" aria-pressed="true">Игроки</button>
-        <button type="button" data-view="2" aria-pressed="false">Связки (2)</button>
+        <button type="button" data-view="2" aria-pressed="false">Пары</button>
         <button type="button" data-view="3" aria-pressed="false">Тройки</button>
         <button type="button" data-view="5" aria-pressed="false">Пятёрки</button>
       </div>
@@ -92,6 +91,7 @@
         <label>Команда<select class="in" id="fTeam"></select></label>
         <label>Игрок<select class="in" id="fPlayer"></select></label>
         <label>Четверть<select class="in" id="fQuarter"></select></label>
+        <button type="button" class="reset" id="fReset">Сбросить</button>
       </div>
 
       <p class="mu note" id="selLabel"></p>
