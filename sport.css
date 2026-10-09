@@ -2,7 +2,7 @@
 body.sport{--ac:#4DA3FF;--pink:#FF5C8A;--green:#3DDC97}
 
 /* Ограничитель ширины 1480px и центрирование экрана */
-body.sport .w{max-width:1480px; margin:0 auto; width:100%; padding:0 20px;}
+body.sport .w{max-width:1586px; margin:0 auto; width:100%; padding:0 20px;}
 
 select.in{color-scheme:dark;appearance:auto;padding-right:10px;width:100%}
 .head{padding-top:24px;padding-bottom:16px}
