@@ -41,7 +41,7 @@ h1 span{color:var(--ac)}
 .status{display:flex;align-items:center;gap:10px;margin-top:22px;font-size:14px;color:var(--mu)}
 .status i{width:8px;height:8px;border-radius:50%;background:#3DDC97}
 .social{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
-.social .btn{font-family:var(--mono);font-size:13px}
+.social .btn{font-family:var(--mono);font-size:17px}
 .art{flex:1 1 360px;display:flex;justify-content:center}
 .stage{position:relative;width:min(100%,440px);aspect-ratio:1/1}
 .ring{position:absolute;inset:6%;border-radius:50%;border:2px solid var(--ac);opacity:.8}
