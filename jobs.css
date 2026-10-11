@@ -1,0 +1,17 @@
+/* Страница вакансий: сетка берётся из sport.css, здесь только отличия */
+body.jobs{--ac:#3DDC97}
+.filters .check{display:flex;align-items:center;gap:8px;min-height:34px;font-size:13px;color:var(--tx);cursor:pointer}
+.filters .check input{width:16px;height:16px;accent-color:var(--ac)}
+.chart{position:relative;width:100%;border-radius:12px;background:#0E141C;border:1px solid var(--bd);overflow:hidden}
+.chart canvas{display:block;width:100%}
+.tip{position:absolute;z-index:3;pointer-events:none;padding:6px 10px;border-radius:8px;background:rgba(10,10,12,.94);border:1px solid var(--bd);font-size:12px;line-height:1.4;max-width:260px;white-space:normal}
+.tip[hidden]{display:none}
+.legend span.sw{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.below{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:start;margin-top:20px}
+.below .card h2{margin-bottom:6px}
+.news .meta{margin-top:4px}
+.notes{margin:0;padding-left:18px;color:var(--mu);font-size:14px;line-height:1.7;display:grid;gap:6px}
+.notes b{color:var(--tx);font-weight:500}
+.ok{color:var(--green)} .err{color:var(--pink)}
+.news-section .news{grid-template-columns:1fr}
+@media (max-width:1024px){.below{grid-template-columns:1fr}}
