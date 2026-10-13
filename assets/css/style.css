@@ -79,7 +79,7 @@ h1 span{color:var(--ac)}
 .skill{display:flex;justify-content:space-between;gap:8px}
 .bar{height:6px;border-radius:3px;background:var(--bd);margin:8px 0 18px}
 .bar i{display:block;height:100%;border-radius:3px;background:var(--ac)}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:12px;margin-top: 40px;}
 .tile{border:1px solid var(--bd);border-radius:12px;padding:16px 8px;text-align:center;background:var(--sf);font-family:var(--mono);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:10px;transition:border-color .15s,transform .15s}
 .tile:hover{border-color:var(--ac);transform:translateY(-2px)}
 .tile svg{width:28px;height:28px;display:block}
