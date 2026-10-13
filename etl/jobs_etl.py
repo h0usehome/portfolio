@@ -6,11 +6,11 @@ Jobs ETL: рынок вакансий аналитиков данных. Ист�
   arbeitnow  https://www.arbeitnow.com/api/job-board-api  (вакансии Европы, постранично)
 
 Запуск:
-  python3 jobs_etl.py run                      # все источники
-  python3 jobs_etl.py run --source remotive    # один источник
-  python3 jobs_etl.py run --dry-run            # скачать и разобрать, ничего не писать в БД
+  python3 etl/jobs_etl.py run                      # все источники
+  python3 etl/jobs_etl.py run --source remotive    # один источник
+  python3 etl/jobs_etl.py run --dry-run            # скачать и разобрать, ничего не писать в БД
 
-Что делает пайплайн:
+Что делает пайплайн: etl/jobs_etl.py
   1. extract    : скачивает вакансии, у каждого источника свой адаптер
   2. normalize  : единая модель вакансии, роль, уровень, зарплата в EUR/год, навыки из текста
   3. quality    : проверки качества, предупреждения пишутся в журнал запуска
