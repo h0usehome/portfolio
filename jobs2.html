@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Рынок вакансий аналитика | Bogdan Pinashin</title>
+<meta name="description" content="Какие навыки чаще требуют, как они сочетаются и сколько платят: ежедневно обновляемый анализ вакансий для аналитиков данных.">
+<meta name="theme-color" content="#0A0A0C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="sport.css">
+<link rel="stylesheet" href="jobs.css">
+</head>
+<body class="sport jobs">
+
+<header class="top">
+  <div class="w">
+    <a class="logo" href="index.html">Bogdan<span>.data</span></a>
+    <nav class="nav" aria-label="Основное меню">
+      <a href="index.html#about">Обо мне</a>
+      <a href="index.html#dashboards">Дашборды</a>
+      <a href="index.html#skills">Навыки</a>
+      <a href="index.html#contacts">Контакты</a>
+    </nav>
+    <a class="btn" href="index.html#dashboards" style="border-color:var(--ac);color:var(--ac)">Все дашборды</a>
+  </div>
+</header>
+
+<main>
+  <section class="w head">
+    <div class="lbl">Данные · Рынок труда</div>
+    <h1>Рынок вакансий аналитика данных</h1>
+    <p class="mu" id="subtitle">Загрузка данных…</p>
+    <div class="results" id="results" role="group" aria-label="Роли"></div>
+  </section>
+
+  <section class="w board">
+
+    <!-- СЛЕВА: Топы -->
+    <aside class="side side-left" aria-label="Топ навыков, зарплат, ролей и компаний">
+      <h2>Топ рынка</h2>
+      <p class="mu note" id="leftNote"></p>
+      <div class="seg" role="group" aria-label="Что показать" id="leftTabs">
+        <button type="button" data-view="skills" aria-pressed="true">Навыки</button>
+        <button type="button" data-view="salary" aria-pressed="false">Оплата</button>
+        <button type="button" data-view="roles" aria-pressed="false">Роли</button>
+        <button type="button" data-view="companies" aria-pressed="false">Фирмы</button>
+      </div>
+      <ol class="rank-list" id="leftList"></ol>
+    </aside>
+
+    <!-- ЦЕНТР: Heatmap связей навыков -->
+    <div class="card map-card">
+      <div class="map-top">
+        <h2 id="chartTitle">Какие навыки идут вместе</h2>
+        <div class="seg" role="group" aria-label="Режим графика" id="modes" style="width: auto; margin-bottom: 0;">
+          <button type="button" data-mode="co" aria-pressed="true">Совместно</button>
+          <button type="button" data-mode="lift" aria-pressed="false">Лифт</button>
+          <button type="button" data-mode="sal" aria-pressed="false">Зарплата</button>
+        </div>
+      </div>
+      <div class="chart" id="chart">
+        <canvas id="cv" role="img" aria-label="График навыков"></canvas>
+        <div class="tip" id="tip" hidden></div>
+        <div class="empty" id="mapEmpty" hidden>Нет вакансий для выбранных фильтров</div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <!-- СПРАВА: Фильтры и статистика -->
+    <aside class="side side-right" aria-label="Статистика">
+      <h2>Статистика</h2>
+      <div class="filters">
+        <label>Уровень<select class="in" id="fLevel"></select></label>
+        <label>Источник<select class="in" id="fSource"></select></label>
+        <label>Формат<select class="in" id="fRemote"></select></label>
+        <label class="check"><input type="checkbox" id="fSalary"> Только с зарплатой</label>
+        <button type="button" class="reset" id="fReset">Сбросить</button>
+      </div>
+      <p class="mu note" id="selLabel"></p>
+      <div class="kpis" id="kpis"></div>
+
+      <h3>Навыки</h3>
+      <div class="scroll"><table id="skillTable"></table></div>
+
+      <h3>Здоровье пайплайна</h3>
+      <div class="scroll"><table id="healthTable"></table></div>
+    </aside>
+  </section>
+
+  <section class="w below">
+    <div class="card">
+      <h2>Динамика вакансий</h2>
+      <p class="mu note" id="trendNote"></p>
+      <div class="chart" id="trendBox"><canvas id="trend" role="img" aria-label="Динамика числа вакансий"></canvas></div>
+      <div class="legend" id="trendLegend"></div>
+    </div>
+    <div class="card">
+      <h2>Свежие вакансии</h2>
+      <p class="mu note">Ссылки ведут на страницы источников</p>
+      <ul class="news" id="latest"></ul>
+    </div>
+  </section>
+
+  <section class="w news-section">
+    <h2>Как это устроено</h2>
+    <p class="mu note">Ежедневный пайплайн: скачивание, нормализация, проверки качества, загрузка в PostgreSQL. Тексты объявлений не сохраняются, из них извлекаются только навыки.</p>
+    <ul class="notes">
+      <li><b>Источники.</b> Remotive (удалённые вакансии) и Arbeitnow (Европа). Данные только этих досок, поэтому рынок не полный.</li>
+      <li><b>Зарплата</b> указана далеко не во всех вакансиях, поэтому статистика по ней смещена к компаниям, которые её раскрывают. Суммы приведены к евро в год по приблизительным курсам.</li>
+      <li><b>Лифт</b> показывает, насколько два навыка встречаются вместе чаще, чем при случайном совпадении (1 значит независимость).</li>
+      <li><b>Медиана</b> считается только при пяти и более вакансиях с зарплатой, иначе показывается прочерк.</li>
+    </ul>
+    <p style="margin:16px 0 0"><a class="btn" href="pipeline.html" style="border-color:var(--ac);color:var(--ac)">Как устроен пайплайн: путь данных от API до графика</a></p>
+  </section>
+</main>
+
+<footer>
+  <div class="w mu">
+    <span>Данные: <a href="https://remotive.com" rel="noopener">Remotive</a>, <a href="https://www.arbeitnow.com" rel="noopener">Arbeitnow</a>. Обновляется раз в сутки.</span>
+    <span>Python · Supabase · GitHub Actions</span>
+  </div>
+</footer>
+
+<script src="jobs.js"></script>
+</body>
+</html>

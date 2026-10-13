@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Путь данных: пайплайн вакансий | Bogdan Pinashin</title>
+<meta name="description" content="Как данные о вакансиях проходят путь от открытых API до графиков на сайте: извлечение, очистка, загрузка в PostgreSQL и представление.">
+<meta name="theme-color" content="#0A0A0C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="pipeline.css">
+</head>
+<body class="pipe">
+
+<header class="top">
+  <div class="w">
+    <a class="logo" href="index.html">Bogdan<span>.data</span></a>
+    <nav class="nav" aria-label="Основное меню">
+      <a href="index.html#about">Обо мне</a>
+      <a href="index.html#dashboards">Дашборды</a>
+      <a href="index.html#skills">Навыки</a>
+      <a href="index.html#contacts">Контакты</a>
+    </nav>
+    <a class="btn" href="jobs.html" style="border-color:var(--ac);color:var(--ac)">Открыть дашборд</a>
+  </div>
+</header>
+
+<main class="w">
+  <section class="intro">
+    <div class="lbl">Проект · Рынок вакансий аналитика</div>
+    <h1>Путь данных: от API до графика</h1>
+    <p class="mu lead">Каждый день пайплайн забирает вакансии из открытых источников, очищает их, кладёт в PostgreSQL, и из этих таблиц строится дашборд. Нажмите на этап, чтобы увидеть код, примеры «до и после» и живые цифры последнего запуска.</p>
+    <p class="mu note" id="liveNote"></p>
+  </section>
+
+  <!-- ПАЙПЛАЙН слева направо -->
+  <section aria-label="Схема пайплайна">
+    <div class="flow" id="flow" role="tablist" aria-label="Этапы пайплайна"></div>
+  </section>
+
+  <!-- Детали выбранного этапа -->
+  <section class="detail card" id="detail" role="tabpanel" aria-live="polite"></section>
+
+  <section class="cta">
+    <a class="btn pri" href="jobs.html">Смотреть результат: дашборд вакансий</a>
+    <a class="btn" href="https://github.com/h0usehome" rel="noopener">Код на GitHub</a>
+  </section>
+</main>
+
+<footer>
+  <div class="w mu">
+    <span>Цифры в схеме берутся из журнала запусков в базе и обновляются при открытии страницы.</span>
+    <span>Python · PostgreSQL · GitHub Actions</span>
+  </div>
+</footer>
+
+<script src="pipeline-examples.js"></script>
+<script src="pipeline.js"></script>
+</body>
+</html>
