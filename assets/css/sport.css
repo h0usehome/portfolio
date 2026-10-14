@@ -81,16 +81,51 @@ section.w{margin-bottom:20px}
 .board > .side{contain:size;overflow-y:auto;scrollbar-width:thin;min-height:560px}
 
 /* --- ЦЕНТР: Карта бросков --- */
-.map-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
-.map-top h2{margin:0}
+.map-top {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr; 
+    align-items: center;
+    margin-bottom: 14px;
+    gap: 12px;
+}
+.map-top h2{margin:0;justify-self: start; /* Прижимаем заголовок к левому краю */}
+.map-top .seg {
+    margin: 0;
+    justify-self: end; /* Прижимаем кнопки к правому краю */
+}
 .court{position:relative;--ar:1.0357;aspect-ratio:var(--ar);width:min(100%, max(460px, calc((100vh - 220px) * var(--ar))));border-radius:12px;overflow:hidden;background:#0E141C;border:1px solid var(--bd);margin:0 auto}
 .court canvas, .court svg{position:absolute;inset:0;width:100%;height:100%}
 .court svg{color:rgba(255,255,255,.3);pointer-events:none}
 .court svg *{vector-effect:non-scaling-stroke}
 .empty[hidden]{display:none}
 .empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--mu);background:rgba(10,10,12,.6);text-align:center;padding:20px}
-.legend{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--mu)}
-.legend .bar{width:200px;height:8px;border-radius:4px}
+.legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 0; /* Убираем старый отступ в 14px, который тянул блок вниз */
+    font-size: 13px;
+    color: var(--mu);
+    line-height: 1; /* Выравнивает текст строго по центру полосы */
+}
+
+.legend .bar {
+    width: 200px;
+    height: 8px;
+    border-radius: 4px;
+    margin-top: -1px; /* Микро-коррекция для идеального визуального выравнивания шрифта */
+}
+@media (max-width: 760px) {
+    .map-top {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+
+
 
 /* --- СПРАВА: Фильтры и стата --- */
 .filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}
