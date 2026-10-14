@@ -9,7 +9,10 @@ const CFG = {
 // Геометрия площадки в координатах Basketball-Reference: 10 px = 1 фут, кольцо около (250, 52).
 // Если карта выглядит сдвинутой, проверьте калибровку запросом из sql/nba_views.sql и поправьте bx, by.
 const COURT = { w: 500, h: 470, bx: 250, by: 52 };
-// Параметры плавности карты: сигма размытия в координатах площадки (px) и шаг расчётной сетки
+// Видимая область = поле + поля вокруг него. Она расширяется под данные, чтобы броски на краю и за линиями не пропадали.
+const VIEW = { x0: -28, y0: -28, w: COURT.w + 56, h: COURT.h + 56 };
+const SCALE = 2;                                   // разрешение canvas: 2 пикселя на единицу координат
+// Параметры плавности карты: сигма размытия (в координатах площадки) и шаг расчётной сетки
 const HEAT = { cell: 4, sigmaDensity: 15, sigmaEff: 22, prior: 2.2 };
 const ZONES = [
   { label: '0–3 фт', min: 0, max: 4 }, { label: '4–9 фт', min: 4, max: 10 },
@@ -19,7 +22,8 @@ const ZONES = [
 const DEMO = new URLSearchParams(location.search).has('demo');
 
 const state = {
-  games: [], shots: [], top: [], lineups: [], news: [],
+  games: [], shots: [], top: [], lineups: [], news: [], teamAssets: [], playerAssets: [],
+  teamLogo: new Map(), photos: new Map(),
   f: { game: 'all', team: 'all', player: 'all', quarter: 'all' },
   mode: 'density', leftView: 'players',
 };
@@ -41,8 +45,10 @@ function h(tag, props, ...kids) {
 }
 const fmt = (v, d = 1) => (v == null || Number.isNaN(v) ? '—' : Number(v).toFixed(d));
 const pct = (v) => (v == null ? '—' : (v * 100).toFixed(1) + '%');
+const share = (n, total) => (total ? `${Math.round((n / total) * 100)}%` : '—');
 const num = (v) => Number(v) || 0;
 const quarterLabel = (q) => (Number(q) <= 4 ? `${q}-я четверть` : `Овертайм ${q - 4}`);
+const initials = (name) => (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
 async function rest(view, query = '') {
   const rows = [], PAGE = 1000;                         // PostgREST отдаёт максимум 1000 строк за запрос
@@ -56,6 +62,59 @@ async function rest(view, query = '') {
   }
 }
 
+/* ============================== Логотипы и фото ============================== */
+/** Логотип команды. Если ссылки нет или она не открылась, показывается короткий значок с кодом команды. */
+function teamLogo(abbr, size = 20) {
+  const badge = () => h('span', { class: 'tbadge', text: String(abbr || '?').slice(0, 3) });
+  const url = state.teamLogo.get(abbr);
+  if (!url) return badge();
+  const img = h('img', { class: 'tlogo', src: url, alt: '', width: size, height: size, loading: 'lazy', referrerpolicy: 'no-referrer' });
+  img.addEventListener('error', () => img.replaceWith(badge()), { once: true });
+  return img;
+}
+/** Фото игрока. Нет фото или не загрузилось: круг с инициалами. */
+function avatar(pid, name, cls = '') {
+  const fallback = () => h('span', { class: `avatar initials ${cls}`.trim(), text: initials(name) });
+  const url = state.photos.get(pid)?.url;
+  if (!url) return fallback();
+  const img = h('img', { class: `avatar ${cls}`.trim(), src: url, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
+  img.addEventListener('error', () => img.replaceWith(fallback()), { once: true });
+  return img;
+}
+
+/* ============================== Подсказки ============================== */
+const tt = h('div', { class: 'tt', role: 'tooltip', hidden: true });
+document.body.append(tt);
+let ttTarget = null;
+function placeTip(x, y) {
+  const w = tt.offsetWidth, hh = tt.offsetHeight;
+  let left = x + 14, top = y + 16;
+  if (left + w > innerWidth - 8) left = x - w - 14;
+  if (top + hh > innerHeight - 8) top = y - hh - 14;
+  tt.style.left = Math.max(8, left) + 'px'; tt.style.top = Math.max(8, top) + 'px';
+}
+function showTip(el, x, y) {
+  ttTarget = el; tt.textContent = el.dataset.tip; tt.hidden = false;
+  if (x == null) { const r = el.getBoundingClientRect(); x = r.left + r.width / 2; y = r.bottom; }
+  placeTip(x, y);
+}
+function hideTip() { ttTarget = null; tt.hidden = true; }
+document.addEventListener('mouseover', (e) => { const el = e.target.closest?.('[data-tip]'); if (el) { if (el !== ttTarget) showTip(el, e.clientX, e.clientY); } else hideTip(); });
+document.addEventListener('mousemove', (e) => { if (ttTarget && !tt.hidden) placeTip(e.clientX, e.clientY); });
+document.addEventListener('focusin', (e) => { const el = e.target.closest?.('[data-tip]'); if (el) showTip(el); });
+document.addEventListener('focusout', hideTip);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideTip(); });
+document.addEventListener('scroll', hideTip, true);
+
+/* Определения показателей для подсказок */
+const GLOSS = {
+  'FG%': 'Процент попаданий с игры: попадания ÷ броски.',
+  '3P%': 'Точность трёхочковых: попадания ÷ попытки трёхочковых.',
+  'eFG%': 'Эффективный FG%. Трёхочковое попадание стоит в 1,5 раза больше двухочкового, поэтому оно считается с весом 1,5.\n(попадания + 0,5 × трёхочковые попадания) ÷ броски',
+  'Очки/бросок': 'Сколько очков с игры приносит один бросок (штрафные не учитываются).',
+  'Дистанция': 'Средняя дистанция бросков в футах (1 фут ≈ 30 см).',
+};
+
 /* ============================== Статистика ============================== */
 function summarize(arr) {
   let m = 0, t3 = 0, t3m = 0, pts = 0, dist = 0;
@@ -66,7 +125,7 @@ function summarize(arr) {
     dist += num(s.distance_ft);
   }
   const n = arr.length;
-  return { n, m, fg: n ? m / n : null, t3, t3m, tp: t3 ? t3m / t3 : null,
+  return { n, m, t3, t3m, pts, fg: n ? m / n : null, tp: t3 ? t3m / t3 : null,
            efg: n ? (m + 0.5 * t3m) / n : null, pps: n ? pts / n : null, avgd: n ? dist / n : null };
 }
 
@@ -82,20 +141,36 @@ function filteredShots(skip = []) {
 /* ============================== Карта бросков ============================== */
 const canvas = $('#heat');
 const ctx = canvas.getContext('2d');
-const SCALE = canvas.width / COURT.w;
+const gx2px = (x) => (x - VIEW.x0) * SCALE;
+const gy2px = (y) => (y - VIEW.y0) * SCALE;
+
+/** Подгоняет видимую область под данные: бросок у края или за линией не должен обрезаться. */
+function fitView(shots) {
+  let x0 = 0, x1 = COURT.w, y0 = 0, y1 = COURT.h;
+  for (const s of shots) {
+    const x = num(s.coord_x), y = num(s.coord_y);
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  const pad = 28, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  x0 = clamp(Math.floor(x0 - pad), -140, -pad); x1 = clamp(Math.ceil(x1 + pad), COURT.w + pad, COURT.w + 140);
+  y0 = clamp(Math.floor(y0 - pad), -100, -pad); y1 = clamp(Math.ceil(y1 + pad), COURT.h + pad, COURT.h + 140);
+  Object.assign(VIEW, { x0, y0, w: x1 - x0, h: y1 - y0 });
+  canvas.width = Math.round(VIEW.w * SCALE); canvas.height = Math.round(VIEW.h * SCALE);
+  $('#court').style.setProperty('--ar', (VIEW.w / VIEW.h).toFixed(4));
+  $('#court svg').setAttribute('viewBox', `${VIEW.x0} ${VIEW.y0} ${VIEW.w} ${VIEW.h}`);
+}
 
 /**
  * Оценка плотности ядром Гаусса: каждый бросок «размазывается» по соседним клеткам в его настоящих координатах.
- * В отличие от суммирования по крупным клеткам, пятно получается плавным и не зависит от сетки.
  * Возвращает суммарный вес (sc) и сумму набранных очков (sp) на мелкой сетке.
  */
 function kde(arr, sigmaPx) {
-  const cell = HEAT.cell, gw = Math.ceil(COURT.w / cell), gh = Math.ceil(COURT.h / cell);
+  const cell = HEAT.cell, gw = Math.ceil(VIEW.w / cell), gh = Math.ceil(VIEW.h / cell);
   const sig = sigmaPx / cell, R = Math.ceil(sig * 3);
   const k = []; for (let d = -R; d <= R; d++) k.push(Math.exp(-(d * d) / (2 * sig * sig)));
   const sc = new Float32Array(gw * gh), sp = new Float32Array(gw * gh);
   for (const s of arr) {
-    const gx = Math.round(num(s.coord_x) / cell), gy = Math.round(num(s.coord_y) / cell);
+    const gx = Math.round((num(s.coord_x) - VIEW.x0) / cell), gy = Math.round((num(s.coord_y) - VIEW.y0) / cell);
     if (gx < -R || gx > gw + R || gy < -R || gy > gh + R) continue;
     const val = s.is_made ? num(s.shot_value) : 0;
     for (let dy = -R; dy <= R; dy++) {
@@ -131,7 +206,7 @@ function drawMap() {
 
   if (state.mode === 'dots') {
     for (const s of arr) {
-      const x = num(s.coord_x) * SCALE, y = num(s.coord_y) * SCALE;
+      const x = gx2px(num(s.coord_x)), y = gy2px(num(s.coord_y));
       ctx.lineWidth = 2.5;
       if (s.is_made) { ctx.strokeStyle = 'rgba(61,220,151,.95)'; ctx.beginPath(); ctx.arc(x, y, 7, 0, 7); ctx.stroke(); }
       else { ctx.strokeStyle = 'rgba(255,92,138,.8)'; ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y + 5); ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5); ctx.stroke(); }
@@ -149,15 +224,8 @@ function drawMap() {
     const c = sc[i], d = c / max;
     if (d < 0.015) continue;
     let rgb, a;
-    if (!eff) {
-      rgb = ramp(Math.pow(d, 0.85));
-      a = smooth(Math.min(1, d / 0.35)) * 0.92;                  // край плавно уходит в прозрачность, без резкой границы
-    } else {
-      // сглаживание к среднему: в редких областях цвет не прыгает из-за пары бросков
-      const pps = (sp[i] + HEAT.prior * avg) / (c + HEAT.prior);
-      rgb = ramp(0.5 + (pps - avg) / (avg * 1.1));
-      a = smooth(Math.min(1, d / 0.3)) * 0.92;
-    }
+    if (!eff) { rgb = ramp(Math.pow(d, 0.85)); a = smooth(Math.min(1, d / 0.35)) * 0.92; }
+    else { const pps = (sp[i] + HEAT.prior * avg) / (c + HEAT.prior); rgb = ramp(0.5 + (pps - avg) / (avg * 1.1)); a = smooth(Math.min(1, d / 0.3)) * 0.92; }
     img.data.set([rgb[0], rgb[1], rgb[2], Math.round(a * 255)], i * 4);
   }
   octx.putImageData(img, 0, 0);
@@ -188,15 +256,14 @@ function renderSubtitle() {
 
 function renderResults() {
   const box = $('#results'); box.replaceChildren();
-  const all = h('button', { type: 'button', class: 'chip-game', 'aria-pressed': state.f.game === 'all', text: 'Все матчи' });
+  const all = h('button', { type: 'button', class: 'chip-game all', 'aria-pressed': state.f.game === 'all', text: 'Все матчи' });
   all.onclick = () => setFilter('game', 'all');
   box.append(all);
   for (const g of state.games) {
     const hw = num(g.home_pts) > num(g.visitor_pts);
-    const btn = h('button', { type: 'button', class: 'chip-game', 'aria-pressed': state.f.game === g.game_id },
-      h('span', { class: hw ? 'lose' : 'win', text: g.visitor_abbr }), h('b', { class: hw ? 'lose' : 'win', text: g.visitor_pts }),
-      h('span', { text: '–' }),
-      h('b', { class: hw ? 'win' : 'lose', text: g.home_pts }), h('span', { class: hw ? 'win' : 'lose', text: g.home_abbr }));
+    const line = (abbr, pts, win) => h('span', { class: `tm ${win ? 'win' : 'lose'}` }, teamLogo(abbr), h('span', { class: 'ab', text: abbr }), h('b', { text: pts }));
+    const btn = h('button', { type: 'button', class: 'chip-game', 'aria-pressed': state.f.game === g.game_id, 'aria-label': `${g.visitor_abbr} ${g.visitor_pts}, ${g.home_abbr} ${g.home_pts}` },
+      line(g.visitor_abbr, g.visitor_pts, !hw), line(g.home_abbr, g.home_pts, hw));
     btn.onclick = () => setFilter('game', g.game_id);
     box.append(btn);
   }
@@ -212,57 +279,88 @@ function fillSelect(id, options, value) {
 function renderFilters() {
   const f = state.f;
   fillSelect('#fGame', [['all', 'Все матчи'], ...state.games.map((g) => [g.game_id, `${g.visitor_abbr} @ ${g.home_abbr}`])], f.game);
-
   const teams = [...new Set(filteredShots(['team', 'player', 'quarter']).map((s) => s.team_abbr))].sort();
   f.team = fillSelect('#fTeam', [['all', 'Все'], ...teams.map((t) => [t, t])], f.team);
-
   const pl = new Map();
   for (const s of filteredShots(['player', 'quarter'])) {
     const p = pl.get(s.player_id) || { name: s.player_name, n: 0 }; p.n++; pl.set(s.player_id, p);
   }
   const players = [...pl].sort((a, b) => b[1].n - a[1].n);
   f.player = fillSelect('#fPlayer', [['all', 'Все'], ...players.map(([id, p]) => [id, `${p.name} (${p.n})`])], f.player);
-
   const qs = [...new Set(state.shots.map((s) => num(s.quarter)))].sort((a, b) => a - b);
   f.quarter = fillSelect('#fQuarter', [['all', 'Все'], ...qs.map((q) => [String(q), quarterLabel(q)])], f.quarter);
 }
 
-function selectionLabel() {
-  const f = state.f, g = state.games.find((x) => x.game_id === f.game);
-  const parts = [g ? `${g.visitor_abbr} @ ${g.home_abbr}` : 'Все матчи'];
-  if (f.team !== 'all') parts.push(f.team);
-  if (f.player !== 'all') parts.push(state.shots.find((s) => s.player_id === f.player)?.player_name || f.player);
-  if (f.quarter !== 'all') parts.push(quarterLabel(f.quarter));
-  return parts.join(' · ');
+/** Строка «Выборка: ...» с логотипами команд выбранного матча или команды. */
+function renderSelLabel() {
+  const f = state.f, g = state.games.find((x) => x.game_id === f.game), box = $('#selLabel');
+  box.replaceChildren('Выборка:');
+  if (f.team !== 'all') box.append(teamLogo(f.team, 18), f.team);
+  else if (g) box.append(teamLogo(g.visitor_abbr, 18), `${g.visitor_abbr} @ ${g.home_abbr}`, teamLogo(g.home_abbr, 18));
+  else box.append('все матчи');
+  if (f.player !== 'all') box.append(`· ${state.shots.find((s) => s.player_id === f.player)?.player_name || f.player}`);
+  if (f.quarter !== 'all') box.append(`· ${quarterLabel(f.quarter)}`);
+}
+
+/** Карточка игрока: появляется в правом блоке только когда выбран конкретный игрок. */
+function renderPlayerCard() {
+  const box = $('#playerCard'), pid = state.f.player;
+  if (pid === 'all') { box.hidden = true; box.replaceChildren(); return; }
+  const sample = state.shots.find((s) => s.player_id === pid);
+  const name = sample?.player_name || state.photos.get(pid)?.name || pid;
+  const s = summarize(filteredShots());
+  box.replaceChildren(avatar(pid, name, 'lg'), h('div', {}, h('b', { text: name }),
+    h('div', { class: 'meta' }, sample ? teamLogo(sample.team_abbr, 16) : null, sample?.team_abbr || '', h('span', { text: `· ${s.n} бросков · FG% ${pct(s.fg)}` }))));
+  box.hidden = false;
 }
 
 function renderStats() {
-  const arr = filteredShots(), s = summarize(arr);
-  $('#selLabel').textContent = `Выборка: ${selectionLabel()}`;
-  const kpis = [['Попад. / броски', `${s.m}/${s.n}`], ['FG%', pct(s.fg)], ['3P%', pct(s.tp)], ['eFG%', pct(s.efg)], ['Очки / бросок', fmt(s.pps, 2)], ['Дистанция, фт', s.avgd == null ? '—' : fmt(s.avgd, 1)]];
-  $('#kpis').replaceChildren(...kpis.map(([l, v]) => h('div', { class: 'kpi' }, h('div', { class: 'v', text: String(v) }), h('div', { class: 'l', text: l }))));
+  hideTip();
+  const arr = filteredShots(), s = summarize(arr), N = arr.length;
+  renderSelLabel(); renderPlayerCard();
 
-  const zt = $('#zones'); zt.replaceChildren(h('thead', {}, h('tr', {}, ...['Зона', 'Броски', 'FG%', 'Оч/бр'].map((t) => h('th', { text: t })))));
+  const kpis = [
+    ['Попад. / броски', `${s.m}/${s.n}`, `Попадания и все броски выборки.\n${s.m} попаданий, ${s.n - s.m} промахов.`],
+    ['FG%', pct(s.fg), `${GLOSS['FG%']}\n${s.m} ÷ ${s.n}`],
+    ['3P%', pct(s.tp), `${GLOSS['3P%']}\n${s.t3m} из ${s.t3}`],
+    ['eFG%', pct(s.efg), `${GLOSS['eFG%']}\n(${s.m} + 0,5 × ${s.t3m}) ÷ ${s.n}`.replace('GLOSS.eFG%', '')],
+    ['Очки / бросок', fmt(s.pps, 2), `${GLOSS['Очки/бросок']}\n${s.pts} очков с ${s.n} бросков`],
+    ['Дистанция, фт', s.avgd == null ? '—' : fmt(s.avgd, 1), GLOSS['Дистанция']],
+  ];
+  $('#kpis').replaceChildren(...kpis.map(([l, v, tip]) => h('div', { class: 'kpi', tabindex: 0, 'data-tip': tip }, h('div', { class: 'v', text: String(v) }), h('div', { class: 'l', text: l }))));
+
+  const th = (label, tip) => h('th', { text: label, 'data-tip': tip });
+  const zt = $('#zones'); zt.replaceChildren(h('thead', {}, h('tr', {},
+    th('Зона', 'Расстояние от кольца до места броска. Полоска под названием показывает долю зоны во всех бросках выборки.'),
+    th('Броски', 'Количество бросков из зоны.'), th('FG%', GLOSS['FG%']), th('Оч/бр', GLOSS['Очки/бросок']))));
   const zb = h('tbody');
   for (const z of ZONES) {
     const zs = summarize(arr.filter((x) => num(x.distance_ft) >= z.min && num(x.distance_ft) < z.max));
-    const share = arr.length ? zs.n / arr.length : 0;
-    const first = h('td', {}, z.label, h('span', { class: 'share' }, h('i', { style: `width:${(share * 100).toFixed(0)}%` })));
-    zb.append(h('tr', {}, first, h('td', { class: 'mono', text: String(zs.n) }), h('td', { class: 'mono', text: pct(zs.fg) }), h('td', { class: 'mono', text: fmt(zs.pps, 2) })));
+    const frac = N ? zs.n / N : 0;
+    zb.append(h('tr', {},
+      h('td', { 'data-tip': `${z.label}: ${zs.n} из ${N} бросков (${share(zs.n, N)} выборки)` }, z.label, h('span', { class: 'share' }, h('i', { style: `width:${(frac * 100).toFixed(0)}%` }))),
+      h('td', { class: 'mono', text: String(zs.n), 'data-tip': `${zs.n} бросков: ${zs.m} попаданий, ${zs.n - zs.m} промахов` }),
+      h('td', { class: 'mono', text: pct(zs.fg), 'data-tip': zs.n ? `${zs.m} попаданий из ${zs.n} бросков` : 'Бросков из этой зоны нет' }),
+      h('td', { class: 'mono', text: fmt(zs.pps, 2), 'data-tip': zs.n ? `${zs.pts} очков с ${zs.n} бросков` : 'Бросков из этой зоны нет' })));
   }
   zt.append(zb);
 
   const by = new Map();
   for (const x of arr) { if (!by.has(x.player_id)) by.set(x.player_id, { name: x.player_name, team: x.team_abbr, rows: [] }); by.get(x.player_id).rows.push(x); }
   const rows = [...by.values()].map((p) => ({ ...p, s: summarize(p.rows) })).sort((a, b) => b.s.n - a.s.n).slice(0, 8);
-  const pt = $('#players'); pt.replaceChildren(h('thead', {}, h('tr', {}, ...['Игрок', 'Бр.', 'FG%', 'eFG%'].map((t) => h('th', { text: t })))));
+  const pt = $('#players'); pt.replaceChildren(h('thead', {}, h('tr', {},
+    th('Игрок', 'Игроки выборки с наибольшим числом бросков (не более восьми).'), th('Бр.', 'Количество бросков.'), th('FG%', GLOSS['FG%']), th('eFG%', GLOSS.eFG))));
   const pb = h('tbody');
-  for (const p of rows) pb.append(h('tr', {}, h('td', { text: `${p.name} · ${p.team}` }), h('td', { class: 'mono', text: p.s.n }), h('td', { class: 'mono', text: pct(p.s.fg) }), h('td', { class: 'mono', text: pct(p.s.efg) })));
+  for (const p of rows) pb.append(h('tr', {},
+    h('td', { 'data-tip': `${p.name} (${p.team})\n${p.s.m} попаданий из ${p.s.n} бросков` }, h('span', { class: 'who' }, h('span', {}, teamLogo(p.team, 16), p.name))),
+    h('td', { class: 'mono', text: String(p.s.n), 'data-tip': `${p.s.n} бросков, ${share(p.s.n, N)} выборки` }),
+    h('td', { class: 'mono', text: pct(p.s.fg), 'data-tip': `${p.s.m} из ${p.s.n}` }),
+    h('td', { class: 'mono', text: pct(p.s.efg), 'data-tip': `(${p.s.m} + 0,5 × ${p.s.t3m}) ÷ ${p.s.n}\nТрёхочковые: ${p.s.t3m} из ${p.s.t3}` })));
   if (!rows.length) pb.append(h('tr', {}, h('td', { colspan: 4, text: 'Нет данных' })));
   pt.append(pb);
 }
 
-/** Левая панель: лучшие игроки и лучшие связки (вкладки без данных скрываются). */
+/** Левая панель: лучшие игроки (с фото) и лучшие связки (с фото участников). */
 function renderLeft() {
   const tabs = [...document.querySelectorAll('#leftTabs button')];
   for (const b of tabs) {
@@ -274,12 +372,13 @@ function renderLeft() {
   tabs.forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === state.leftView));
 
   const ol = $('#leftList'); ol.replaceChildren();
+  const meta = (abbr, text) => h('span', {}, teamLogo(abbr, 16), h('span', { text }));
   if (state.leftView === 'players') {
     $('#leftNote').textContent = 'Очки + передачи − потери за ночь';
     if (!state.top.length) return ol.append(h('li', { class: 'mu', text: 'Нет данных' }));
-    state.top.forEach((p, i) => ol.append(h('li', {},
-      h('span', { class: 'rank', text: i + 1 }),
-      h('div', { class: 'who' }, h('b', { text: p.player_name }), h('span', { text: `${p.team_abbr} · ${num(p.pts)} оч · ${num(p.ast)} аст · ${num(p.tov)} пот` })),
+    state.top.forEach((p, i) => ol.append(h('li', { class: 'has-avatar' },
+      h('span', { class: 'rank', text: i + 1 }), avatar(p.player_id, p.player_name),
+      h('div', { class: 'who' }, h('b', { text: p.player_name }), meta(p.team_abbr, `${num(p.pts)} оч · ${num(p.ast)} аст · ${num(p.tov)} пот`)),
       h('div', { class: 'score' }, String(num(p.score)), h('small', { text: 'баллов' })))));
     return;
   }
@@ -288,8 +387,9 @@ function renderLeft() {
   if (!rows.length) return ol.append(h('li', { class: 'mu', text: 'Нет данных' }));
   rows.forEach((l, i) => ol.append(h('li', {},
     h('span', { class: 'rank', text: i + 1 }),
-    h('div', { class: 'who' }, h('b', { text: l.lineup }), h('span', { text: `${l.team_abbr} · ${fmt(l.minutes_played, 0)} мин · +/- ${num(l.plus_minus)}` })),
-    h('div', { class: 'score' }, fmt(l.pts_per_100_poss, 1), h('small', { text: 'очк./100' })))));
+    h('div', { class: 'who' }, h('b', { text: l.lineup }), meta(l.team_abbr, `${fmt(l.minutes_played, 0)} мин · +/- ${num(l.plus_minus)}`)),
+    h('div', { class: 'score' }, fmt(l.pts_per_100_poss, 1), h('small', { text: 'очк./100' })),
+    Array.isArray(l.player_ids) && l.player_ids.length ? h('div', { class: 'avatars' }, l.player_ids.map((pid) => avatar(pid, state.photos.get(pid)?.name || pid, 'sm'))) : null)));
 }
 
 function renderNews() {
@@ -308,7 +408,6 @@ function renderNews() {
 }
 
 function renderAll() { renderResults(); renderFilters(); drawMap(); renderStats(); }
-
 function setFilter(key, value) {
   state.f[key] = value;
   if (key === 'game') { state.f.team = 'all'; state.f.player = 'all'; }
@@ -317,11 +416,15 @@ function setFilter(key, value) {
 }
 
 /* ============================== Демо-данные (sport.html?demo=1) ============================== */
+function svgUri(svg) { return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg); }
+function demoLogo(abbr, hue) { return svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="hsl(${hue},55%,40%)"/><text x="20" y="25" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" fill="#fff">${abbr}</text></svg>`); }
+function demoPhoto(name, hue) { return svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 190"><rect width="260" height="190" fill="hsl(${hue},30%,22%)"/><circle cx="130" cy="78" r="38" fill="hsl(${hue},25%,62%)"/><path d="M50 190c8-48 40-62 80-62s72 14 80 62z" fill="hsl(${hue},25%,48%)"/></svg>`); }
+
 function demoData() {
   let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const gauss = () => Math.sqrt(-2 * Math.log(rnd() || 1e-9)) * Math.cos(2 * Math.PI * rnd());
   const pairs = [['LAL', 'DEN', 118, 112], ['BOS', 'NYK', 104, 109], ['GSW', 'OKC', 121, 99]];
-  const games = [], shots = [];
+  const games = [], shots = [], teamAssets = [], playerAssets = [];
   let id = 1;
   pairs.forEach(([v, hm, vp, hp], gi) => {
     const gid = `20251225${gi}${hm}`;
@@ -342,15 +445,21 @@ function demoData() {
       }
     });
   });
-  const top = [['Игрок LAL-1', 'LAL', 34, 11, 3], ['Игрок BOS-1', 'BOS', 29, 9, 2], ['Игрок DEN-2', 'DEN', 27, 12, 4], ['Игрок GSW-1', 'GSW', 31, 6, 2], ['Игрок NYK-1', 'NYK', 28, 7, 3]]
-    .map(([player_name, team_abbr, pts, ast, tov]) => ({ player_name, team_abbr, pts, ast, tov, score: pts + ast - tov })).sort((a, b) => b.score - a.score);
-  const lineups = [];
+  // крайние броски: у самой линии, за боковой линией и из-за средней линии (проверка, что они видны)
+  [[-14, 6, 2], [512, 12, 2], [250, 478, 3], [488, 468, 3], [4, 4, 2]].forEach(([x, y, val], k) => shots.push({ shot_id: id++, game_id: games[0].game_id, team_abbr: 'LAL', player_id: 'lal1', player_name: 'Игрок LAL-1', quarter: 4, coord_x: x, coord_y: y, is_made: k % 2 === 0, shot_value: val, distance_ft: Math.hypot(x - COURT.bx, y - COURT.by) / 10 }));
+  const teams = [...new Set(games.flatMap((g) => [g.visitor_abbr, g.home_abbr]))];
+  teams.forEach((t, i) => teamAssets.push({ team_id: t, logo_url: demoLogo(t, 30 + i * 50) }));
+  const names = new Map(shots.map((s) => [s.player_id, s.player_name]));
+  [...names].forEach(([pid, nm], i) => playerAssets.push({ player_id: pid, player_name: nm, photo_url: demoPhoto(nm, 200 + (i * 37) % 160) }));
+  const top = [['lal1', 'Игрок LAL-1', 'LAL', 34, 11, 3], ['bos1', 'Игрок BOS-1', 'BOS', 29, 9, 2], ['den2', 'Игрок DEN-2', 'DEN', 27, 12, 4], ['gsw1', 'Игрок GSW-1', 'GSW', 31, 6, 2], ['nyk1', 'Игрок NYK-1', 'NYK', 28, 7, 3]]
+    .map(([player_id, player_name, team_abbr, pts, ast, tov]) => ({ player_id, player_name, team_abbr, pts, ast, tov, score: pts + ast - tov })).sort((a, b) => b.score - a.score);
+  const lineups = [], pool = ['lal1', 'lal2', 'lal3', 'bos1', 'bos2', 'den1', 'den2', 'gsw1', 'gsw2', 'nyk1'];
   [2, 3].forEach((size) => ['LAL', 'BOS', 'GSW', 'DEN', 'NYK'].forEach((t, i) => lineups.push({ team_abbr: t, lineup_type: size, minutes_played: 600 - i * 70, plus_minus: 120 - i * 18, pts_per_100_poss: 128 - i * 3.1 - size,
-    lineup: Array.from({ length: size }, (_, k) => `Игрок${k + 1}`).join(' / ') })));
+    lineup: Array.from({ length: size }, (_, k) => `Игрок${k + 1}`).join(' / '), player_ids: Array.from({ length: size }, (_, k) => pool[(i * 2 + k) % pool.length]) })));
   const now = Date.now();
   const news = [['Тренер объявил состав на следующую игру', 'ESPN', 2], ['Лидер лиги по передачам пропустит матч из-за травмы', 'CBS Sports', 5], ['Клубы обсуждают обмен перед дедлайном', 'ESPN', 9], ['Новичок обновил рекорд по очкам', 'CBS Sports', 20]]
     .map(([title, source, hrs]) => ({ title, source, url: 'https://example.com/', published_at: new Date(now - hrs * 3600000).toISOString() }));
-  return { games, shots, top, lineups, news };
+  return { games, shots, top, lineups, news, teamAssets, playerAssets };
 }
 
 /* ============================== Запуск ============================== */
@@ -372,14 +481,18 @@ async function init() {
   } else {
     // блоки грузятся независимо: сбой одного не ломает остальные
     const jobs = { games: 'v_nba_last_games', shots: 'v_nba_last_shots', top: 'v_nba_top_players', lineups: 'v_nba_best_lineups', news: 'v_nba_news' };
-    const res = await Promise.allSettled(Object.values(jobs).map((v) => rest(v)));
-    Object.keys(jobs).forEach((k, i) => {
-      if (res[i].status === 'fulfilled') state[k] = res[i].value;
-      else console.error(res[i].reason);
+    const optional = { teamAssets: 'v_nba_team_assets', playerAssets: 'v_nba_player_assets' };   // логотипы и фото: без них страница работает
+    const res = await Promise.allSettled([...Object.values(jobs), ...Object.values(optional)].map((v) => rest(v)));
+    [...Object.keys(jobs), ...Object.keys(optional)].forEach((k, i) => {
+      if (res[i].status === 'fulfilled') state[k] = res[i].value; else console.error(res[i].reason);
     });
     const failed = Object.keys(jobs).filter((_, i) => res[i].status === 'rejected');
     if (failed.length) $('#subtitle').after(h('p', { class: 'error', text: `Не удалось загрузить: ${failed.join(', ')}. Проверьте sql/nba_views.sql и права anon.` }));
+    if (res.slice(Object.keys(jobs).length).some((r) => r.status === 'rejected')) console.warn('Логотипы и фото недоступны: выполните sql/nba_assets.sql и команду assets.');
   }
+  state.teamLogo = new Map(state.teamAssets.map((r) => [r.team_id, r.logo_url]));
+  state.photos = new Map(state.playerAssets.map((r) => [r.player_id, { url: r.photo_url, name: r.player_name }]));
+  fitView(state.shots);
   renderSubtitle(); renderAll(); renderLeft(); renderNews();
 }
 init();

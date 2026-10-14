@@ -439,6 +439,57 @@ def fetch_news():
     print(f'Записано новостей: {len(unique)}')
 
 
+# ---------------------------------------------------------------- 4. фото игроков (ссылки на NBA CDN)
+PHOTO_URL = 'https://cdn.nba.com/headshots/nba/latest/260x190/{id}.png'
+# Ручные исправления, если имя на Basketball-Reference не совпало с именем в NBA: 'player_id в нашей базе': id игрока NBA.
+# Список «не найдено» печатается после запуска; найдите id на nba.com/player/<id> и добавьте сюда.
+PHOTO_OVERRIDES = {}
+
+
+def build_player_assets(known_ids, nba_players):
+    """
+    Сопоставляет игроков из нашей базы с каталогом NBA по нормализованному имени (без диакритики, регистра и знаков):
+    'Nikola Jokić' -> 'nikolajokic'. При совпадении имён побеждает действующий игрок.
+    Возвращает (строки для nba_player_assets, список id без совпадения).
+    """
+    by_pid = {}
+    for p in nba_players:
+        pid = extract_player_id(p['full_name'])
+        if pid in known_ids:
+            cur = by_pid.get(pid)
+            if cur is None or (p.get('is_active') and not cur.get('is_active')):
+                by_pid[pid] = p
+    rows = [{"player_id": pid, "nba_person_id": p['id'], "photo_url": PHOTO_URL.format(id=p['id'])} for pid, p in by_pid.items()]
+    for pid, nba_id in PHOTO_OVERRIDES.items():
+        if pid in known_ids:
+            rows = [r for r in rows if r['player_id'] != pid] + [{"player_id": pid, "nba_person_id": nba_id, "photo_url": PHOTO_URL.format(id=nba_id)}]
+    matched = {r['player_id'] for r in rows}
+    return rows, sorted(known_ids - matched)
+
+
+def sync_player_assets():
+    """Для игроков из таблицы players записывает ссылку на фото в nba_player_assets. Повторный запуск безопасен (upsert)."""
+    try:
+        from nba_api.stats.static import players as nba_players      # каталог лежит внутри пакета, запросов к сайтам нет
+    except ImportError:
+        sys.exit('Нужен пакет nba_api: pip install nba_api')
+    sb = get_client()
+    known, offset = set(), 0
+    while True:                                                       # у Supabase лимит 1000 строк на запрос
+        res = sb.table('players').select('player_id').range(offset, offset + 999).execute()
+        known.update(r['player_id'] for r in res.data)
+        if len(res.data) < 1000:
+            break
+        offset += 1000
+    rows, missing = build_player_assets(known, nba_players.get_players())
+    for part in chunks(rows, 200):
+        sb.table('nba_player_assets').upsert(part, on_conflict='player_id').execute()
+    print(f'Игроков в базе: {len(known)}, фото найдено: {len(rows)}, без совпадения: {len(missing)}')
+    if missing:
+        print('Не найдены (новички, другое написание имени): ' + ', '.join(missing[:40]) + (' ...' if len(missing) > 40 else ''))
+        print('Для таких игроков на сайте показываются инициалы. Исправить можно через PHOTO_OVERRIDES в этом файле.')
+
+
 # ---------------------------------------------------------------- запуск
 def main(argv=None):
     ap = argparse.ArgumentParser(description='NBA ETL (backfill)')
@@ -454,6 +505,7 @@ def main(argv=None):
     g.add_argument('--force', action='store_true', help='перезагрузить игры, которые уже есть в БД')
 
     sub.add_parser('news', help='новости NBA из RSS за последние сутки')
+    sub.add_parser('assets', help='ссылки на фото игроков (NBA CDN) для игроков из базы')
 
     l = sub.add_parser('lineups', help='связки игроков за сезон')
     l.add_argument('--season', type=int, required=True, help='год окончания сезона, например 2026 для 2025-26')
@@ -475,6 +527,8 @@ def main(argv=None):
         sys.exit(0 if backfill_games(start, end, not args.no_shots, args.force) else 1)
     elif args.cmd == 'news':
         fetch_news()
+    elif args.cmd == 'assets':
+        sync_player_assets()
     elif args.cmd == 'lineups':
         seed_teams()
         teams = list(NBA_TEAMS) if args.teams.lower() == 'all' else [t.strip().upper() for t in args.teams.split(',') if t.strip()]

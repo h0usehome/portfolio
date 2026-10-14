@@ -13,13 +13,48 @@ section.w{margin-bottom:20px}
 .card h3{font-size:15px;margin:16px 0 10px;color:var(--mu);font-weight:500}
 .note{font-size:14px;margin:0 0 14px}
 
-/* Итоги матчей сверху (карусель) */
-.results{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;scrollbar-width:thin}
-.chip-game{flex:0 0 auto;display:flex;align-items:center;gap:12px;min-height:44px;padding:8px 16px;background:var(--bg);border:1px solid var(--bd);border-radius:12px;color:var(--tx);cursor:pointer;font:inherit}
-.chip-game:hover{border-color:var(--ac)}
-.chip-game[aria-pressed=true]{background:var(--sf);border-color:var(--ac);box-shadow:0 0 0 1px var(--ac) inset}
-.chip-game b{font-family:var(--mono);font-weight:500}
-.chip-game .win{color:var(--tx)} .chip-game .lose{color:var(--mu)}
+/* =========================================
+   ШАПКА: заголовок и табло матчей в одной карточке
+========================================= */
+.head{padding-top:20px;padding-bottom:4px}
+.hero-card{
+  position:relative;overflow:hidden;
+  display:grid;grid-template-columns:minmax(260px,.8fr) minmax(0,2fr);gap:28px;align-items:center;
+  padding:22px 26px;border:1px solid var(--bd);border-radius:16px;
+  background:
+    radial-gradient(900px 240px at 0% 0%, color-mix(in srgb,var(--ac) 16%, transparent), transparent 65%),
+    var(--sf);
+}
+.hero-card::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:3px;border-radius:0 3px 3px 0;background:var(--ac)}
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--mu);margin-bottom:6px}
+.crumbs a:hover{color:var(--ac)}
+.crumbs b{color:var(--tx);font-weight:500}
+.hero-text h1{font-size:clamp(26px,3.2vw,38px);margin:0 0 6px;line-height:1.1}
+.hero-text .mu{margin:0;font-size:14px}
+.hero-label{font-size:12px;color:var(--mu);margin-bottom:8px}
+
+/* Табло матчей */
+.results{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.chip-game{flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch;gap:5px;min-width:122px;padding:9px 12px;background:rgba(10,10,12,.55);border:1px solid var(--bd);border-radius:12px;color:var(--tx);cursor:pointer;font:inherit;text-align:left;transition:border-color .15s,transform .15s}
+.chip-game:hover{border-color:var(--ac);transform:translateY(-1px)}
+.chip-game[aria-pressed=true]{background:color-mix(in srgb,var(--ac) 10%,var(--sf));border-color:var(--ac);box-shadow:0 0 0 1px var(--ac) inset}
+.chip-game.all{justify-content:center;align-items:center;min-width:92px;font-size:14px}
+.tm{display:flex;align-items:center;gap:8px;line-height:1.2}
+.tm .ab{flex:1;font-size:13px;letter-spacing:.02em}
+.tm b{font-family:var(--mono);font-weight:500;font-size:14px}
+.tm.lose{color:var(--mu)}
+
+/* Логотипы команд и фото игроков */
+.tlogo,.tbadge{width:20px;height:20px;flex:0 0 auto;object-fit:contain}
+.tbadge{display:inline-grid;place-items:center;border-radius:6px;background:var(--bd);color:var(--mu);font:600 8px var(--mono)}
+.avatar{flex:0 0 auto;width:40px;height:40px;border-radius:50%;object-fit:cover;object-position:50% 8%;background:linear-gradient(160deg,#27324a,#161c26);border:1px solid var(--bd)}
+.avatar.sm{width:28px;height:28px}
+.avatar.lg{width:76px;height:76px;border-radius:16px}
+.avatar.initials{display:inline-grid;place-items:center;font:500 13px var(--mono);color:var(--mu)}
+.avatar.lg.initials{font-size:22px}
+.avatars{display:flex;margin-top:8px;grid-column:1/-1}
+.avatars .avatar{margin-left:-8px;box-shadow:0 0 0 2px var(--bg)}
+.avatars .avatar:first-child{margin-left:0}
 
 /* Переключатели табов (Игроки / Двойки / Тройки) */
 .seg{display:flex;width:100%;gap:4px;padding:4px;background:var(--bg);border:1px solid var(--bd);border-radius:999px;margin-bottom:14px}
@@ -48,9 +83,10 @@ section.w{margin-bottom:20px}
 /* --- ЦЕНТР: Карта бросков --- */
 .map-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
 .map-top h2{margin:0}
-.court{position:relative;width:min(100%, max(420px, calc((100vh - 250px) * 1.0638)));aspect-ratio:500/470;border-radius:12px;overflow:hidden;background:#0E141C;border:1px solid var(--bd);margin:0 auto}
+.court{position:relative;--ar:1.0357;aspect-ratio:var(--ar);width:min(100%, max(460px, calc((100vh - 220px) * var(--ar))));border-radius:12px;overflow:hidden;background:#0E141C;border:1px solid var(--bd);margin:0 auto}
 .court canvas, .court svg{position:absolute;inset:0;width:100%;height:100%}
-.court svg{color:rgba(255,255,255,.28);pointer-events:none}
+.court svg{color:rgba(255,255,255,.3);pointer-events:none}
+.court svg *{vector-effect:non-scaling-stroke}
 .empty[hidden]{display:none}
 .empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--mu);background:rgba(10,10,12,.6);text-align:center;padding:20px}
 .legend{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--mu)}
@@ -68,6 +104,21 @@ section.w{margin-bottom:20px}
 .kpi .v{font-family:var(--mono);font-size:17px;line-height:1.2}
 .kpi .l{font-size:11px;color:var(--mu);margin-top:2px;line-height:1.2}
 
+.player-card{display:flex;align-items:center;gap:14px;padding:12px;margin:0 0 12px;border:1px solid var(--bd);border-radius:12px;background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 12%,var(--bg)),var(--bg))}
+.player-card b{display:block;font-size:16px;line-height:1.25}
+.player-card .meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--mu);margin-top:3px}
+.player-card[hidden]{display:none}
+#selLabel{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* Подсказки при наведении на ячейки статистики */
+[data-tip]{cursor:help}
+th[data-tip]{text-decoration:underline dotted var(--mu);text-underline-offset:4px}
+td[data-tip]:hover{background:rgba(255,255,255,.045)}
+.kpi[data-tip]{transition:border-color .15s}
+.kpi[data-tip]:hover,.kpi[data-tip]:focus-visible{border-color:var(--ac);outline:none}
+.tt{position:fixed;z-index:1000;max-width:290px;padding:9px 11px;border-radius:9px;background:rgba(10,10,12,.97);border:1px solid var(--bd);box-shadow:0 10px 30px rgba(0,0,0,.45);font-size:12.5px;line-height:1.5;white-space:pre-line;pointer-events:none;color:var(--tx)}
+.tt[hidden]{display:none}
+
 /* Таблицы (справа внизу) */
 .scroll{overflow-x:auto;scrollbar-width:thin}
 table{width:100%;border-collapse:collapse;font-size:13px}
@@ -82,8 +133,10 @@ td.mono,.mono{font-family:var(--mono)}
 .rank-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .rank-list li{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;padding:10px 12px;background:var(--bg);border:1px solid var(--bd);border-radius:12px}
 .rank{font-family:var(--mono);font-size:18px;color:var(--ac)}
+.rank-list li.has-avatar{grid-template-columns:26px 40px 1fr auto}
 .who b{display:block;font-weight:500;font-size:14px;line-height:1.35}
-.who span{display:block;font-size:12px;color:var(--mu);margin-top:2px}
+.who span{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--mu);margin-top:2px}
+.who .tlogo,.who .tbadge{width:16px;height:16px}
 .score{font-family:var(--mono);font-size:18px;text-align:right}
 .score small{display:block;font-size:11px;color:var(--mu);text-transform:uppercase}
 
@@ -111,6 +164,7 @@ body.sport .news-section {
   .board{grid-template-columns:250px minmax(0,1fr) 280px;}
 }
 @media (max-width:1024px){
+  .hero-card{grid-template-columns:1fr;gap:16px}
   /* Узкий экран: карта сверху на всю ширину, боковые блоки под ней */
   .board{grid-template-columns:1fr 1fr;}
   .board > .side{contain:none;overflow:visible;min-height:0}
