@@ -2,12 +2,12 @@
 NBA ETL: Basketball-Reference -> Supabase (PostgreSQL). Версия для загрузки исторических данных (backfill).
 
 Команды:
-  python nba_etl.py seed                                         # справочник из 30 команд (один раз)
-  python nba_etl.py games --from 2025-12-20 --to 2025-12-26      # игры, статистика игроков и броски за диапазон дат
-  python nba_etl.py games --date 2025-12-25 --no-shots           # один день, без карты бросков (быстрее)
-  python nba_etl.py games --from 2025-10-21 --to 2025-10-31 --force    # перезагрузить уже загруженные игры
-  python nba_etl.py lineups --season 2026 --teams BOS,LAL        # связки; --teams all для всех команд
-  python nba_etl.py news                                         # новости NBA из RSS (таблица news)
+  python etl/nba_etl.py seed                                         # справочник из 30 команд (один раз)
+  python3 etl/nba_etl.py games --from 2025-12-25 --to 2025-12-26      # игры, статистика игроков и броски за диапазон дат
+  python etl/nba_etl.py games --date 2025-12-25 --no-shots           # один день, без карты бросков (быстрее)
+  python etl/nba_etl.py games --from 2025-10-21 --to 2025-10-31 --force    # перезагрузить уже загруженные игры
+  python etl/nba_etl.py lineups --season 2026 --teams BOS,LAL        # связки; --teams all для всех команд
+  python etl/nba_etl.py news                                         # новости NBA из RSS (таблица news)
 
 Ключи Supabase заданы в константах SUPABASE_URL и SUPABASE_KEY в начале файла.
 Это anon-ключ: для записи в таблицы в Supabase нужны политики RLS на insert/update (см. объяснение в чате).
@@ -25,6 +25,8 @@ import unicodedata
 import xml.etree.ElementTree as ET
 from datetime import date, datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
+
+from curl_cffi import requests as curl_requests
 
 import pandas as pd
 import requests
@@ -44,8 +46,18 @@ SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 BASE = "https://www.basketball-reference.com"
 PAUSE = 3.5          # минимальный интервал между запросами к сайту; он ограничивает частоту, не уменьшайте
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Sec-Ch-Ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1"
 }
 
 # Коды как на Basketball-Reference (у Бруклина BRK, у Шарлотт CHO). Если страница команды не открывается, сверьте код с адресом на сайте.
@@ -83,24 +95,26 @@ def get_client() -> Client:
 
 
 # ---------------------------------------------------------------- вспомогательные функции
-def get(url: str, retries: int = 3) -> requests.Response:
-    """GET с общей паузой между запросами, повтором при 429 и понятной ошибкой при других кодах."""
+def get(url: str, retries: int = 3):
     global _last_request
     for attempt in range(retries):
         wait = PAUSE - (time.time() - _last_request)
         if wait > 0:
             time.sleep(wait)
-        r = requests.get(url, headers=HEADERS, timeout=30)
+            
+        # Используем impersonate для полной подделки под Chrome
+        r = curl_requests.get(url, impersonate="chrome110", timeout=30)
+        
         _last_request = time.time()
         if r.status_code == 429:
             delay = 60 * (attempt + 1)
             print(f'  429 Too Many Requests, жду {delay} с...')
             time.sleep(delay)
             continue
+        # Для curl_cffi проверка ошибок выглядит так же
         r.raise_for_status()
         return r
     raise RuntimeError(f'Не удалось получить {url}')
-
 
 def to_num(x, default: float = 0.0) -> float:
     """Одно значение -> число. NaN и мусор превращаются в default."""
