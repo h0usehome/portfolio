@@ -314,22 +314,55 @@ function renderLeft() {
   tabs.forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === state.leftView));
 
   const ol = $('#leftList'); ol.replaceChildren();
-  const row = (i, name, meta, big, small, team) => ol.append(h('li', {}, h('span', { class: 'rank', text: i + 1 }),
-    h('div', { class: 'who' }, h('b', {}, dot(teamColor(team)), name), h('span', { text: meta })), h('div', { class: 'score' }, big, h('small', { text: small }))));
+
+  // Обновленная функция отрисовки одной строки с поддержкой фото и цветов команд
+  const row = (i, p, metaText, big, small) => {
+    const li = h('li', { class: p.photo_url ? 'has-avatar' : '' });
+    
+    // 1. Номер (ранк)
+    li.append(h('span', { class: 'rank', text: i + 1 }));
+    
+    // 2. Аватарка или инициалы
+    if (p.photo_url) {
+      li.append(h('img', { class: 'avatar', src: p.photo_url, alt: p.driver_name, loading: 'lazy' }));
+    } else {
+      const init = p.code || (p.driver_name ? p.driver_name.substring(0, 3).toUpperCase() : '???');
+      li.append(h('div', { class: 'avatar initials', text: init }));
+    }
+
+    // 3. Плашка команды и мета-текст
+    const teamName = p.constructor_name || p.team || '';
+    const badgeColor = p.team_color || teamColor(teamName);
+    const badge = h('span', { class: 'tbadge', style: `background: ${badgeColor}`, text: teamName.substring(0, 3).toUpperCase() });
+    
+    // 4. Блок "Кто"
+    const who = h('div', { class: 'who' }, 
+      h('b', { text: p.driver_name }), 
+      h('span', {}, badge, ` ${metaText}`)
+    );
+    li.append(who);
+
+    // 5. Очки / Результат
+    li.append(h('div', { class: 'score' }, h('span', { text: big }), h('small', { text: small })));
+
+    ol.append(li);
+  };
+
   const v = state.leftView;
   if (v === 'drivers') {
     $('#leftNote').textContent = 'По очкам, затем по числу обогнанных мест';
-    state.top.forEach((p, i) => row(i, p.driver_name, `${p.team} · старт ${p.grid || 'PL'} → финиш ${p.position}`, String(num(p.points)), `${p.gained > 0 ? '+' : ''}${num(p.gained)} мест`, p.team));
+    state.top.forEach((p, i) => row(i, p, `старт ${p.grid || 'PL'} → финиш ${p.position}`, String(num(p.points)), `${p.gained > 0 ? '+' : ''}${num(p.gained)} мест`));
   } else if (v === 'laps') {
     $('#leftNote').textContent = 'Лучший круг каждого пилота';
-    state.bestLaps.forEach((p, i) => row(i, p.driver_name, `${p.team} · круг ${p.lap}`, fmtLap(num(p.best_ms)), 'время', p.team));
+    state.bestLaps.forEach((p, i) => row(i, p, `круг ${p.lap}`, fmtLap(num(p.best_ms)), 'время'));
   } else if (v === 'pits') {
     $('#leftNote').textContent = 'Самые быстрые стопы (до минуты)';
-    state.bestPits.forEach((p, i) => row(i, p.driver_name, `${p.team} · круг ${p.lap}, стоп №${p.stop}`, (num(p.duration_ms) / 1000).toFixed(2), 'секунд', p.team));
+    state.bestPits.forEach((p, i) => row(i, p, `круг ${p.lap}, стоп №${p.stop}`, (num(p.duration_ms) / 1000).toFixed(2), 'секунд'));
   } else {
     $('#leftNote').textContent = 'Чемпионат пилотов после гонки';
-    state.standings.slice(0, 5).forEach((p, i) => row(i, p.driver_name, `${p.team || ''} · побед ${num(p.wins)}`, String(num(p.points)), 'очков', p.team));
+    state.standings.slice(0, 5).forEach((p, i) => row(i, p, `побед ${num(p.wins)}`, String(num(p.points)), 'очков'));
   }
+  
   if (!ol.children.length) ol.append(h('li', { class: 'mu', text: 'Нет данных' }));
 }
 
@@ -423,6 +456,8 @@ async function init() {
     const failed = Object.keys(jobs).filter((_, i) => res[i].status === 'rejected');
     if (failed.length) $('#subtitle').after(h('p', { class: 'error', text: `Не удалось загрузить: ${failed.join(', ')}. Проверьте sql/f1_views.sql и права anon.` }));
   }
+
+
   renderAll(); renderLeft(); renderNews();
 }
 init();

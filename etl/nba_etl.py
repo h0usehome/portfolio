@@ -4,10 +4,10 @@ NBA ETL: Basketball-Reference -> Supabase (PostgreSQL). Версия для за
 Команды:
   python etl/nba_etl.py seed                                         # справочник из 30 команд (один раз)
   python3 etl/nba_etl.py games --from 2025-12-25 --to 2025-12-26      # игры, статистика игроков и броски за диапазон дат
-  python etl/nba_etl.py games --date 2025-12-25 --no-shots           # один день, без карты бросков (быстрее)
+  python3 etl/nba_etl.py games --date 2025-02-25 --no-shots           # один день, без карты бросков (быстрее)
   python etl/nba_etl.py games --from 2025-10-21 --to 2025-10-31 --force    # перезагрузить уже загруженные игры
   python etl/nba_etl.py lineups --season 2026 --teams BOS,LAL        # связки; --teams all для всех команд
-  python etl/nba_etl.py news                                         # новости NBA из RSS (таблица news)
+  python3 etl/nba_etl.py news                                         # новости NBA из RSS (таблица news)
 
 Ключи Supabase заданы в константах SUPABASE_URL и SUPABASE_KEY в начале файла.
 Это anon-ключ: для записи в таблицы в Supabase нужны политики RLS на insert/update (см. объяснение в чате).
