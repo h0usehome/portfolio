@@ -17,9 +17,13 @@ html {
 body {
     margin: 0;
     background-color: var(--bg);
+    /* Задаем базовые цвета градиентов (если они не переопределены на странице) */
+    --grad-1: #FF8A1F;
+    --grad-2: #368FEE;
+    
     background-image: 
-        radial-gradient(circle at 0% 0%, rgba(255, 138, 31, 0.13) 0%, transparent 65%),
-        radial-gradient(circle at 100% 100%, rgba(54, 143, 238, 0.13) 0%, transparent 65%);
+        radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--grad-1) 13%, transparent) 0%, transparent 65%),
+        radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--grad-2) 15%, transparent) 0%, transparent 65%);
     background-size: 100% 100%;
     background-attachment: fixed;
     color: var(--tx);

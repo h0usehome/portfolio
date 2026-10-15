@@ -1,5 +1,9 @@
 /* Страница Формулы 1: общая сетка берётся из sport.css, здесь только отличия */
-body.f1{--ac:#FF4D4D}
+body.f1{
+    --ac:#FF4D4D;
+    --grad-1: #FF5C8A;
+    --grad-2: #0b1724;
+}
 .filters .reset{grid-column:1/-1}
 .chart{position:relative;width:100%;border-radius:12px;background:#0E141C;border:1px solid var(--bd);overflow:hidden}
 .chart canvas{display:block;width:100%}

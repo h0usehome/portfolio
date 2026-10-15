@@ -1,5 +1,12 @@
 /* Страница спорта: акцент раздела синий, остальное берётся из style.css */
-body.sport{--ac:#4DA3FF;--pink:#FF5C8A;--green:#3DDC97}
+body.sport{
+    --ac:#4DA3FF;
+    --pink:#FF5C8A;
+    --green:#3DDC97;
+    
+    --grad-2: #f7fbfe;
+    --grad-1: #ff0f0f;
+}
 
 /* Ограничитель ширины 1480px и центрирование экрана */
 body.sport .w{max-width:1586px; margin:0 auto; width:100%; padding:0 20px;}
