@@ -24,7 +24,7 @@ body {
 
 a{color:inherit;text-decoration:none}
 a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
-.w{max-width:1160px;margin:0 auto;padding:0 28px}
+.w{max-width:1280px;margin:0 auto;padding:0 28px}
 .row{display:flex;flex-wrap:wrap;gap:24px;align-items:center}
 .mu{font-size:20px;color:var(--mu)}
 .mono{font-family:var(--mono)}
@@ -171,54 +171,48 @@ h1 span{color:var(--ac)}
 
 .tiles {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
     grid-auto-rows: 1fr;
-    /* Увеличиваем расстояние между ячейками (было 12px) */
-    gap: 20px; 
-    /* Убедись, что тут нет margin-top */
+    gap: 24px;
+    
 }
 
 /* 1. Базовый класс ячейки */
 .tile {
     background: rgba(255, 255, 255, 0.03);
-    
-    /* ВАЖНО: полностью убираем border, чтобы он не ломал сетку */
     border: none;
-    /* Вместо него рисуем рамку внутренней тенью - она не занимает физического места */
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05); 
     
     border-radius: 12px;
     padding: 16px 8px;
     text-align: center;
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 15px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 24px;
     line-height: 1.1;
     cursor: pointer;
-    
-    /* Анимируем только те свойства, которые не сдвигают макет */
     transition: transform 0.15s, box-shadow 0.15s;
-    min-height: 112px; 
+    min-height: 132px;
 }
 
 /* 2. Эффект при наведении */
 .tile:hover {
-    /* Меняем цвет "рамки" через тень, размер ячейки остается строго прежним */
     box-shadow: inset 0 0 0 1px var(--ac); 
-    
-    /* Легкое парение над сеткой */
     transform: translateY(-2px); 
-    
-    /* ВАЖНО: Убедись, что ниже по коду нигде не прописан font-weight: bold 
-       или изменение font-size для .tile:hover! */
 }
 
 
-.tile svg{width:35px;height:35px;display:block;transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+.tile svg {
+    width: 38px;
+    height: 38px;
+    display: block;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 .tile:hover svg {
     transform: scale(1.2) rotate(10deg); /* Легкий наклон при наведении */
 }
@@ -385,13 +379,10 @@ footer .w{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
     transition: opacity 0.4s ease 0.1s, transform 0.4s ease 0.1s;
     display: flex; flex-direction: column;
 }
-.proof-content {
-    flex: 1; /* Блок займет все оставшееся место по вертикали */
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 12px;
-    padding: 32px 24px; /* Увеличили внутренние отступы */
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-    display: flex; flex-direction: column; justify-content: center;
+.proof-panel.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 
 /* Делаем склонированную ячейку аккуратной маленькой "таблеткой" */
@@ -411,11 +402,14 @@ footer .w{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 
 /* Содержимое доказательства */
 .proof-content {
-    flex: 1;
+    flex: 1; 
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
-    padding: 24px;
+    padding: 32px 24px; 
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center;
 }
 .proof-content h3 { margin: 0 0 12px 0; font-size: 18px; color: var(--ac); }
 .proof-content p { margin: 0 0 16px 0; color: var(--mu); font-size: 15px; }
