@@ -422,3 +422,141 @@ footer .w{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
     padding: 8px; transition: color 0.15s;
 }
 .btn-close:hover { color: var(--tx); }
+
+
+/* --- ПРОЕКТЫ СТРОКАМИ --- */
+.project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Небольшой отступ, строки разделяются фоном при наведении */
+}
+
+.project-row {
+    display: flex;
+    gap: 32px;
+    padding: 24px;
+    border-radius: 16px;
+    text-decoration: none;
+    align-items: center;
+    transition: background 0.2s ease, transform 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.project-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transform: translateX(8px); /* Легкий сдвиг вправо при чтении */
+}
+
+/* Блок с мини-превью */
+.p-preview {
+    width: 240px;
+    height: 140px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Временная заглушка для превью (пока нет картинок) */
+.p-preview .placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 14px; font-weight: bold;
+    color: rgba(255,255,255,0.5);
+    background: radial-gradient(circle at top left, color-mix(in srgb, var(--bg-color) 20%, transparent), transparent 70%);
+}
+
+.p-preview img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+.project-row:hover .p-preview img {
+    transform: scale(1.05); /* Легкий зум картинки при наведении */
+}
+
+/* Центральный блок с текстом */
+.p-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.p-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+}
+
+.p-header h3 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--tx);
+}
+
+.p-status {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--mu);
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+}
+.p-status.online {
+    color: #3DDC97; /* Зеленый цвет для автообновляемых проектов */
+    background: rgba(61, 220, 151, 0.1);
+}
+
+.p-desc {
+    margin: 0;
+    color: var(--mu);
+    font-size: 16px;
+    max-width: 600px;
+}
+
+/* Маленькие чипы навыков под описанием */
+.p-skills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.p-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--mu);
+}
+
+/* Кнопка действия справа */
+.p-action {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--mu);
+    transition: color 0.2s;
+    white-space: nowrap;
+    padding-left: 16px;
+}
+
+.project-row:hover .p-action {
+    color: var(--ac); /* Загорается оранжевым при наведении */
+}
+
+/* Адаптивность для телефонов */
+@media (max-width: 760px) {
+    .project-row { flex-direction: column; align-items: flex-start; gap: 16px; padding: 16px 0; border: none !important; }
+    .project-row:hover { background: transparent; transform: none; }
+    .p-preview { width: 100%; height: auto; aspect-ratio: 16/9; }
+    .p-header { flex-wrap: wrap; gap: 8px; }
+    .p-action { align-self: flex-start; padding-left: 0; margin-top: 8px; color: var(--ac); }
+}

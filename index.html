@@ -102,19 +102,92 @@
     </div>
   </section>
 
-  <section class="sec" id="dashboards">
-    <div class="w">
-      <div class="lbl">02 · Проекты</div>
-      <h2 style="margin-bottom:26px">Пять дашбордов</h2>
-      <div class="dash">
-        <a class="card" style="--c:#3DDC97" href="pipeline.html"><b>Пайплайн</b><p>Путь данных: от API до графика</p><span>Открыть</span></a>
-        <a class="card" style="--c:#B388FF" href="jobs2.html"><b>Аналитика вакансий</b><p>Рынок вакансий аналитика данных</p><span>Открыть</span></a>
-        <a class="card" style="--c:#FFCF40" href="jobs.html"><b>Вакансии Аналитика</b><p>Рынок вакансий аналитика данных</p><span>Открыть</span></a>
-        <a class="card" style="--c:#FF4D4D" href="f1.html"><b>Formula 1</b><p>Статистика по последней гонке</p><span>Открыть</span></a>
-        <a class="card" style="--c:#4DA3FF" href="sport.html"><b>NBA</b><p>Статистика вчерашних игр</p><span>Открыть</span></a>
-      </div>
+<section class="sec" id="dashboards">
+  <div class="w">
+    <div class="lbl">03 · Проекты</div>
+    <h2 style="margin-bottom:32px">Автоматизация и аналитика</h2>
+    
+    <div class="project-list">
+      
+      <!-- Проект 1: NBA -->
+      <a href="sport_new.html" class="project-row">
+        <div class="p-preview">
+          <img src="assets/img/nba.jpeg" alt="Логотип NBA">
+        </div>
+        <div class="p-info">
+          <div class="p-header">
+            <h3>NBA: Статистика вчерашних игр</h3>
+            <span class="p-status online">Ежедневное обновление</span>
+          </div>
+          <p class="p-desc">Автоматизированный ETL-пайплайн. Собирает данные по API, агрегирует статистику игроков и обновляет дашборд.</p>
+          <div class="p-skills">
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-python"/></svg>Python</span>
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-githubactions"/></svg>Git Actions</span>
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-postgresql"/></svg>PostgreSQL</span>
+          </div>
+        </div>
+        <div class="p-action">Открыть ↗</div>
+      </a>
+
+      <!-- Проект 2: Formula 1 -->
+      <a href="f1.html" class="project-row">
+        <div class="p-preview">
+          <img src="assets/img/formula1.jpg" alt="Логотип Formula 1">
+        </div>
+        <div class="p-info">
+          <div class="p-header">
+            <h3>Formula 1: Телеметрия</h3>
+            <span class="p-status online">Работает</span>
+          </div>
+          <p class="p-desc">Анализ последней гонки: скорости, тайминги секторов и стратегия пит-стопов.</p>
+          <div class="p-skills">
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-python"/></svg>Python</span>
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-powerbi"/></svg>Power BI</span>
+          </div>
+        </div>
+        <div class="p-action">Открыть ↗</div>
+      </a>
+
+      <!-- Проект 3: Рынок вакансий -->
+      <a href="jobs.html" class="project-row">
+        <div class="p-preview">
+          <div class="placeholder" style="--bg-color: #FFCF40;">Data Jobs</div>
+        </div>
+        <div class="p-info">
+          <div class="p-header">
+            <h3>Рынок вакансий: Аналитика данных</h3>
+            <span class="p-status">Статичный отчет</span>
+          </div>
+          <p class="p-desc">Исследование рынка труда: зарплатные вилки, востребованные навыки и распределение по регионам.</p>
+          <div class="p-skills">
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-excel"/></svg>Excel</span>
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-powerbi"/></svg>Power BI</span>
+          </div>
+        </div>
+        <div class="p-action">Открыть ↗</div>
+      </a>
+
+      <!-- Проект 4: Пайплайн (Архитектура) -->
+      <a href="pipeline.html" class="project-row">
+        <div class="p-preview">
+          <div class="placeholder" style="--bg-color: #3DDC97;">Pipeline</div>
+        </div>
+        <div class="p-info">
+          <div class="p-header">
+            <h3>Архитектура ETL-пайплайна</h3>
+            <span class="p-status">Документация</span>
+          </div>
+          <p class="p-desc">Схема движения данных: от парсинга API до финальной визуализации на дашборде.</p>
+          <div class="p-skills">
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-supabase"/></svg>Supabase</span>
+          </div>
+        </div>
+        <div class="p-action">Читать ↗</div>
+      </a>
+
     </div>
-  </section>
+  </div>
+</section>
 
  <section class="sec" id="skills">
   <div class="w two">
