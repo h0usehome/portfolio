@@ -146,12 +146,13 @@ h1 span{color:var(--ac)}
     text-align:center;
     background:var(--sf);
     font-family:var(--mono);
-    font-size:16px;display:flex;
+    font-size:15px;display:flex;
     flex-direction:column;
     align-items:center;
     gap:10px;
     transition:border-color .15s,transform .15s;
     justify-content: center;
+    line-height: 1.1;
 }
 .tile:hover{border-color:var(--ac);transform:translateY(-2px)}
 .tile svg{width:35px;height:35px;display:block;transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
@@ -159,8 +160,8 @@ h1 span{color:var(--ac)}
     transform: scale(1.2) rotate(10deg); /* Легкий наклон при наведении */
 }
 .tile:hover{
-    font-weight: 1000; /* Увеличиваем жирность текста при наведении */
-    font-size: 19px; /* Немного увеличиваем размер текста */
+    font-weight: 800; /* Увеличиваем жирность текста при наведении */
+    font-size: 16px; /* Немного увеличиваем размер текста */
 }
 
 
