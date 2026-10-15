@@ -35,7 +35,7 @@
 </svg>
 
 <header class="top">
-  <div class="w">
+  <!-- <div class="w">
     <a class="logo" href="#top">Bogdan<span>.data</span></a>
     <nav class="nav" aria-label="Основное меню">
       <a href="#about">Обо мне</a>
@@ -44,11 +44,17 @@
       <a href="#contacts">Контакты</a>
     </nav>
     <a class="btn" href="#contacts" style="border-color:var(--ac);color:var(--ac)">Связаться</a>
-  </div>
+  </div> -->
 </header>
 
 <main id="top">
-
+  <!-- Боковая навигация (Индекс) -->
+<nav class="side-nav" aria-label="Быстрая навигация">
+  <a href="#about" class="nav-item active" data-tooltip="Обо мне">01</a>
+  <a href="#skills" class="nav-item" data-tooltip="Навыки">02</a>
+  <a href="#dashboards" class="nav-item" data-tooltip="Проекты">03</a>
+  <a href="#contacts" class="nav-item" data-tooltip="Контакты">04</a>
+</nav>
   <section class="w hero">
     <div class="txt">
       <h1>Богдан <span>Пинашин</span></h1>
@@ -83,7 +89,7 @@
   <section class="sec" id="about">
     <div class="w two">
       <div style="flex:1 1 420px">
-        <div class="lbl">Обо мне</div>
+        <div class="lbl">01 · Обо мне</div>
         <h2 style="margin-bottom:14px">Превращаю данные в выводы, на которые можно опереться</h2>
         <p class="mu" style="margin:0">[Самоучка, который мечтает работать с большими данными и находить в них то, что назаметно многим, и будет полезно ещё большему количеству людей]</p>
       </div>
@@ -98,7 +104,7 @@
 
   <section class="sec" id="dashboards">
     <div class="w">
-      <div class="lbl">Проекты</div>
+      <div class="lbl">02 · Проекты</div>
       <h2 style="margin-bottom:26px">Пять дашбордов</h2>
       <div class="dash">
         <a class="card" style="--c:#3DDC97" href="pipeline.html"><b>Пайплайн</b><p>Путь данных: от API до графика</p><span>Открыть</span></a>
@@ -110,38 +116,82 @@
     </div>
   </section>
 
-  <section class="sec" id="skills">
-    <div class="w two">
-      <div style="flex:1 1 360px">
-        <div class="lbl">Навыки</div>
-        <h2>Инструменты и методы</h2>
-        <div class="skill"><span>Python и Pandas</span><span class="mono mu">[Средний уровень]</span></div><div class="bar"><i style="width:65%"></i></div>
-        <div class="skill"><span>SQL и PostgreSQL</span><span class="mono mu">[Уверенный пользователь]</span></div><div class="bar"><i style="width:75%"></i></div>
-        <div class="skill"><span>Статистика</span><span class="mono mu">[Рабочий уровень]</span></div><div class="bar"><i style="width:70%"></i></div>
-        <div class="skill"><span>Power BI и Excel</span><span class="mono mu">[Свободное владение]</span></div><div class="bar"><i style="width:90%"></i></div>
-        <div class="skill"><span>JavaScript и Chart.js</span><span class="mono mu">[Базовое понимание]</span></div><div class="bar"><i style="width:40%"></i></div>
-      </div>
-      <div class="tiles" style="flex:1 1 360px">
-        <div class="tile"><svg class="ico" width="28" height="28" aria-hidden="true"><use href="#i-python"/></svg>Python</div>
-        <div class="tile"><svg class="ico" width="28" height="28" aria-hidden="true"><use href="#i-pandas"/></svg>Pandas</div>
-        <div class="tile"><svg class="ico" width="28" height="28" aria-hidden="true"><use href="#i-numpy"/></svg>NumPy</div>
-        <div class="tile"><svg class="ico" width="28" height="28" aria-hidden="true"><use href="#i-clickhouse"/></svg>ClickHouse</div>
-        <div class="tile"><svg class="ico" width="28" height="28" aria-hidden="true"><use href="#i-postgresql"/></svg>PostgreSQL</div>
-        <div class="tile"><svg class="ico" width="28" height="28" aria-hidden="true"><use href="#i-supabase"/></svg>Supabase</div>
-        <div class="tile"><svg class="ico" width="28" height="28" aria-hidden="true"><use href="#i-powerbi"/></svg>Power BI</div>
-        <div class="tile"><svg class="ico" width="28" height="28" aria-hidden="true"><use href="#i-excel"/></svg>Excel</div>
-        <div class="tile"><svg class="ico" width="28" height="28" aria-hidden="true"><use href="#i-javascript"/></svg>JavaScript</div>
-        <div class="tile"><svg class="ico" width="28" height="28" aria-hidden="true"><use href="#i-chartdotjs"/></svg>Chart.js</div>
-        <div class="tile"><svg class="ico" width="28" height="28" aria-hidden="true"><use href="#i-d3"/></svg>D3.js</div>
-        <div class="tile"><svg class="ico" width="28" height="28" aria-hidden="true"><use href="#i-githubactions"/></svg>GitHub Actions</div>
-      </div>
+ <section class="sec" id="skills">
+  <div class="w two">
+    
+    <<!-- ЛЕВАЯ ЧАСТЬ (Прогресс-бары) -->
+<div id="skills-left" class="skills-left" style="flex:1 1 360px">
+  <div class="lbl">02 · Навыки</div>
+  <h2>Инструменты и методы</h2>
+  
+  <div class="skill-rows">
+    <!-- Оборачиваем каждую пару "текст + полоса" в skill-row и даем категорию -->
+    <div class="skill-row" data-category="python">
+      <div class="skill"><span>Python и Pandas</span><span class="mono mu">[Средний уровень]</span></div>
+      <div class="bar"><i style="width:65%"></i></div>
     </div>
-  </section>
+    <div class="skill-row" data-category="sql">
+      <div class="skill"><span>SQL и PostgreSQL</span><span class="mono mu">[Уверенный пользователь]</span></div>
+      <div class="bar"><i style="width:75%"></i></div>
+    </div>
+    <div class="skill-row" data-category="stats">
+      <div class="skill"><span>Статистика и NumPy</span><span class="mono mu">[Рабочий уровень]</span></div>
+      <div class="bar"><i style="width:70%"></i></div>
+    </div>
+    <div class="skill-row" data-category="bi">
+      <div class="skill"><span>Power BI и Excel</span><span class="mono mu">[Свободное владение]</span></div>
+      <div class="bar"><i style="width:90%"></i></div>
+    </div>
+    <div class="skill-row" data-category="js">
+      <div class="skill"><span>JavaScript и Chart.js</span><span class="mono mu">[Базовое понимание]</span></div>
+      <div class="bar"><i style="width:40%"></i></div>
+    </div>
+    <div class="skill-row" data-category="infra">
+      <div class="skill"><span>Git Actions и Supabase</span><span class="mono mu">[Инфраструктура]</span></div>
+      <div class="bar"><i style="width:50%"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- ПРАВАЯ ЧАСТЬ (Сетка плиток) -->
+<div id="skills-right" style="flex:1 1 360px; position: relative;">
+  <div class="tiles" id="skills-grid" style="margin-top: 0;">
+    <!-- Добавляем атрибут data-category, чтобы связать плитку с полосой слева -->
+    <div class="tile" data-skill="python" data-category="python"><svg class="ico" width="28" height="28"><use href="#i-python"/></svg>Python</div>
+    <div class="tile" data-skill="pandas" data-category="python"><svg class="ico" width="28" height="28"><use href="#i-pandas"/></svg>Pandas</div>
+    <div class="tile" data-skill="numpy" data-category="stats"><svg class="ico" width="28" height="28"><use href="#i-numpy"/></svg>NumPy</div>
+    
+    <div class="tile" data-skill="clickhouse" data-category="sql"><svg class="ico" width="28" height="28"><use href="#i-clickhouse"/></svg>ClickHouse</div>
+    <div class="tile" data-skill="postgresql" data-category="sql"><svg class="ico" width="28" height="28"><use href="#i-postgresql"/></svg>PostgreSQL</div>
+    <div class="tile" data-skill="supabase" data-category="infra"><svg class="ico" width="28" height="28"><use href="#i-supabase"/></svg>Supabase</div>
+    
+    <div class="tile" data-skill="powerbi" data-category="bi"><svg class="ico" width="28" height="28"><use href="#i-powerbi"/></svg>Power BI</div>
+    <div class="tile" data-skill="excel" data-category="bi"><svg class="ico" width="28" height="28"><use href="#i-excel"/></svg>Excel</div>
+    <div class="tile" data-skill="javascript" data-category="js"><svg class="ico" width="28" height="28"><use href="#i-javascript"/></svg>JavaScript</div>
+    
+    <div class="tile" data-skill="chartjs" data-category="js"><svg class="ico" width="28" height="28"><use href="#i-chartdotjs"/></svg>Chart.js</div>
+    <div class="tile" data-skill="d3" data-category="js"><svg class="ico" width="28" height="28"><use href="#i-d3"/></svg>D3.js</div>
+    <div class="tile" data-skill="githubactions" data-category="infra"><svg class="ico" width="28" height="28"><use href="#i-githubactions"/></svg>Git Actions</div>
+  </div>
+  
+  <!-- Панель доказательства (Оставляем как есть, только HTML структуру) -->
+  <div id="proof-panel" class="proof-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <div id="proof-header"></div>
+      <button id="close-proof" class="btn-close">✕ Закрыть</button>
+    </div>
+    <div id="proof-content" class="proof-content"></div>
+  </div>
+</div>
+
+    </div>
+  </div>
+</section>
 
   <section class="sec" id="contacts">
     <div class="w two">
       <div style="flex:1 1 320px">
-        <div class="lbl">Контакты</div>
+        <div class="lbl">04 · Контакты</div>
         <h2 style="margin-bottom:14px">Обсудим вашу задачу</h2>
         <p class="mu" style="margin:0">Опишите задачу или вопрос по коду. Отвечаю в течение [срок].</p>
       </div>
@@ -159,14 +209,6 @@
   <div class="w mu"><span>Богдан Пинашин, любитель данных</span><span>Python · SQL · Supabase · GitHub Actions</span></div>
 </footer>
 
-<script>
-// Форма открывает почтовый клиент с готовым письмом. Для отправки без клиента подключите Formspree или Supabase.
-document.getElementById('contact').addEventListener('submit', function (e) {
-  e.preventDefault();
-  var f = e.target;
-  var body = f.message.value + '\n\n' + f.name.value + ' (' + f.email.value + ')';
-  location.href = 'mailto:[email]?subject=' + encodeURIComponent('Сообщение с портфолио') + '&body=' + encodeURIComponent(body);
-});
-</script>
+<script src="assets/js/script.js"></script>
 </body>
 </html>
