@@ -248,3 +248,31 @@ function select(i, focus = false) {
   $('#liveNote').textContent = live.ok ? `Последний запуск: ${new Date(last.started_at).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}, статус: ${last.status === 'ok' ? 'успешно' : 'ошибка'}${DEMO ? ' (демо-данные)' : ''}.` : 'Живых цифр пока нет: они появятся после первого запуска пайплайна.';
   render();
 })();
+
+'use strict';
+
+document.addEventListener('DOMContentLoaded', () => {
+  const sections = document.querySelectorAll('.stage-section');
+  const navLinks = document.querySelectorAll('.node-link');
+
+  // Подсветка активного этапа в шапке при скролле
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const id = entry.target.getAttribute('id');
+        navLinks.forEach((link) => {
+          if (link.getAttribute('href') === `#${id}`) {
+            link.classList.add('active');
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+    });
+  }, {
+    rootMargin: '-20% 0px -70% 0px',
+    threshold: 0
+  });
+
+  sections.forEach((sec) => observer.observe(sec));
+});

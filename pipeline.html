@@ -4,14 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
-<title>Путь данных: пайплайн вакансий | Bogdan Pinashin</title>
-<meta name="description" content="Как данные о вакансиях проходят путь от открытых API до графиков на сайте: извлечение, очистка, загрузка в PostgreSQL и представление.">
+<title>Архитектура данных: NBA ETL Pipeline | Bogdan Pinashin</title>
+<meta name="description" content="Как устроена автоматическая система сбора и обработки спортивной аналитики NBA: парсинг Basketball-Reference в обход WAF, нормализация и загрузка в PostgreSQL.">
 <meta name="theme-color" content="#0A0A0C">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="assets/css/style.css">
-
 <link rel="stylesheet" href="assets/css/pipeline.css">
 </head>
 <body class="pipe">
@@ -21,44 +20,313 @@
     <a class="logo" href="index.html">Bogdan<span>.data</span></a>
     <nav class="nav" aria-label="Основное меню">
       <a href="index.html#about">Обо мне</a>
-      <a href="index.html#dashboards">Дашборды</a>
+      <a href="index.html#projects">Проекты</a>
       <a href="index.html#skills">Навыки</a>
       <a href="index.html#contacts">Контакты</a>
     </nav>
-    <a class="btn" href="jobs2.html" style="border-color:var(--ac);color:var(--ac)">Открыть дашборд</a>
+    <a class="btn" href="sport_new.html" style="border-color:var(--ac);color:var(--ac)">Открыть NBA Дашборд</a>
   </div>
 </header>
 
 <main class="w">
+  <!-- Вводный блок -->
   <section class="intro">
-    <div class="lbl">Проект · Рынок вакансий аналитика</div>
-    <h1>Путь данных: от API до графика</h1>
-    <p class="mu lead">Каждый день пайплайн забирает вакансии из открытых источников, очищает их, кладёт в PostgreSQL, и из этих таблиц строится дашборд. Нажмите на этап, чтобы увидеть код, примеры «до и после» и живые цифры последнего запуска.</p>
-    <p class="mu note" id="liveNote"></p>
+    <div class="lbl">Проект · NBA Analytics Pipeline</div>
+    <h1>Архитектура данных: от парсинга WAF до интерактивного дашборда</h1>
+    <p class="mu lead">Автоматизированный ETL-пайплайн на Python, который каждую ночь парсит Basketball-Reference, обрабатывает координаты каждого броска и обновляет реляционную базу данных в Supabase (PostgreSQL).</p>
+    
+    <div class="hood-quick-stats">
+      <div class="hqs-item"><b>~7.5 сек</b><span>на матч (с обходом лимитов)</span></div>
+      <div class="hqs-item"><b>100%</b><span>сохранность координат бросков</span></div>
+      <div class="hqs-item"><b>PostgreSQL</b><span>Supabase Cloud DB</span></div>
+      <div class="hqs-item"><b>Идемпотентность</b><span>UPSERT без дублей</span></div>
+    </div>
   </section>
 
-  <!-- ПАЙПЛАЙН слева направо -->
-  <section aria-label="Схема пайплайна">
-    <div class="flow" id="flow" role="tablist" aria-label="Этапы пайплайна"></div>
-  </section>
+  <!-- Интерактивная быстрая навигация по этапам -->
+  <nav class="flow-nav" aria-label="Навигация по этапам">
+    <a href="#stage-1" class="node-link">
+      <span class="num">01</span>
+      <b>Обход защиты</b>
+      <span class="sub">WAF & curl_cffi</span>
+    </a>
+    <div class="link-arrow">→</div>
+    <a href="#stage-2" class="node-link">
+      <span class="num">02</span>
+      <b>Извлечение</b>
+      <span class="sub">HTML & Shot Charts</span>
+    </a>
+    <div class="link-arrow">→</div>
+    <a href="#stage-3" class="node-link">
+      <span class="num">03</span>
+      <b>Очистка</b>
+      <span class="sub">Имена, MP, nba_api</span>
+    </a>
+    <div class="link-arrow">→</div>
+    <a href="#stage-4" class="node-link">
+      <span class="num">04</span>
+      <b>Загрузка</b>
+      <span class="sub">Supabase UPSERT</span>
+    </a>
+    <div class="link-arrow">→</div>
+    <a href="#stage-5" class="node-link">
+      <span class="num">05</span>
+      <b>Витрина</b>
+      <span class="sub">SQL Views & UI</span>
+    </a>
+  </nav>
 
-  <!-- Детали выбранного этапа -->
-  <section class="detail card" id="detail" role="tabpanel" aria-live="polite"></section>
+  <!-- ВЕРТИКАЛЬНЫЕ СЕКЦИИ (ЭТАП ЗА ЭТАПОМ) -->
+  <div class="stages-stream">
+    
+    <!-- ЭТАП 1 -->
+    <section class="stage-section card" id="stage-1">
+      <div class="stage-badge">01 · ИСТОЧНИК И ОБХОД ЗАЩИТЫ</div>
+      <h2>Обход WAF и соблюдение Rate Limits</h2>
+      <p class="tag">Как выкачивать данные без блокировки IP и избегать ошибки HTTP 429.</p>
+
+      <div class="cols">
+        <div class="col">
+          <h3>Проблема и логика</h3>
+          <ul>
+            <li><b>Жесткий WAF:</b> <i>Basketball-Reference</i> моментально блокирует стандартный <code>requests</code> или <code>urllib</code> по TLS-отпечатку (JA3/JA4).</li>
+            <li><b>Имитация Chrome:</b> Библиотека <code>curl_cffi</code> подменяет TLS-handshake на Chrome 110, убирая подозрения бота.</li>
+            <li><b>Rate Limiting:</b> Лимит ресурса — не более 20 запросов в минуту. Скрипт держит жесткую паузу <b>3.5 секунды</b> между запросами.</li>
+            <li><b>Экспоненциальный откат:</b> При редком 429 скрипт уходит в сон на <code>60 * попытка</code> секунд.</li>
+          </ul>
+        </div>
+        <div class="col wide">
+          <h3>Код: etl/scraper_core.py</h3>
+          <pre class="code"><code><span class="k">from</span> curl_cffi <span class="k">import</span> requests <span class="k">as</span> curl_requests
+<span class="k">import</span> time
+
+PAUSE = <span class="n">3.5</span>
+_last_request = <span class="n">0.0</span>
+
+<span class="k">def</span> <span class="f">safe_get</span>(url: <span class="t">str</span>, retries: <span class="t">int</span> = <span class="n">3</span>):
+    <span class="k">global</span> _last_request
+    <span class="k">for</span> attempt <span class="k">in</span> <span class="t">range</span>(retries):
+        wait = PAUSE - (time.time() - _last_request)
+        <span class="k">if</span> wait > <span class="n">0</span>:
+            time.sleep(wait)
+            
+        <span class="c"># Подделка отпечатка браузера Chrome</span>
+        r = curl_requests.get(url, impersonate=<span class="s">"chrome110"</span>, timeout=<span class="n">30</span>)
+        _last_request = time.time()
+        
+        <span class="k">if</span> r.status_code == <span class="n">429</span>:
+            delay = <span class="n">60</span> * (attempt + <span class="n">1</span>)
+            time.sleep(delay)
+            <span class="k">continue</span>
+            
+        r.raise_for_status()
+        <span class="k">return</span> r</code></pre>
+        </div>
+        <div class="col">
+          <h3>Инженерное решение</h3>
+          <ul>
+            <li><b>Без платных прокси:</b> Точная эмуляция TLS-стека позволила собирать весь сезон без аренды резидентских прокси.</li>
+            <li><b>Синхронизация времени:</b> Мониторинг времени последнего запроса защищает от гонки потоков.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ЭТАП 2 -->
+    <section class="stage-section card" id="stage-2">
+      <div class="stage-badge">02 · ИЗВЛЕЧЕНИЕ ДАННЫХ</div>
+      <h2>Парсинг DOM и координат бросков (Shot Charts)</h2>
+      <p class="tag">Раскомментирование скрытого HTML и получение точных координат X/Y каждого броска.</p>
+
+      <div class="cols">
+        <div class="col">
+          <h3>Особенности структуры</h3>
+          <ul>
+            <li><b>Скрытые таблицы:</b> Расширенная статистика и карта бросков на странице матча скрыты разработчиками внутри HTML-комментариев <code>&lt;!-- ... --&gt;</code>.</li>
+            <li><b>Regex Unmasking:</b> Скрипт очищает комментарии перед прогоном через BeautifulSoup, превращая их в стандартные DOM-узлы.</li>
+            <li><b>Извлечение точек:</b> Координаты бросков вытягиваются из inline-стилей: <code>top: 140px; left: 215px</code> преобразуются в проценты относительно баскетбольного корта.</li>
+          </ul>
+        </div>
+        <div class="col wide">
+          <h3>Код: etl/parse_shots.py</h3>
+          <pre class="code"><code><span class="c"># 1. Извлечение скрытого блока карты бросков</span>
+html_clean = re.sub(<span class="s">r"&lt;!--|--&gt;"</span>, <span class="s">""</span>, response.text)
+soup = BeautifulSoup(html_clean, <span class="s">"html.parser"</span>)
+
+shot_divs = soup.select(<span class="s">"div.shot-area div.tooltip"</span>)
+shots_data = []
+
+<span class="k">for</span> div <span class="k">in</span> shot_divs:
+    <span class="c"># Парсинг top/left координат корта</span>
+    style = div.get(<span class="s">"style"</span>, <span class="s">""</span>)
+    top = <span class="t">int</span>(re.search(<span class="s">r"top:(\d+)px"</span>, style).group(<span class="n">1</span>))
+    left = <span class="t">int</span>(re.search(<span class="s">r"left:(\d+)px"</span>, style).group(<span class="n">1</span>))
+    
+    shots_data.append({
+        <span class="s">"game_id"</span>: game_id,
+        <span class="s">"player_id"</span>: div.get(<span class="s">"data-player-id"</span>),
+        <span class="s">"x"</span>: left,
+        <span class="s">"y"</span>: top,
+        <span class="s">"made"</span>: <span class="s">"make"</span> <span class="k">in</span> div.get(<span class="s">"class"</span>, [])
+    })</code></pre>
+        </div>
+        <div class="col">
+          <h3>Результат</h3>
+          <ul>
+            <li>Полная матрица бросков каждого игрока за матч с признаком попадания/промаха.</li>
+            <li>Готовность для построения тепловых карт результативности в браузере.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ЭТАП 3 -->
+    <section class="stage-section card" id="stage-3">
+      <div class="stage-badge">03 · ОЧИСТКА И ТРАНСФОРМАЦИЯ</div>
+      <h2>Нормализация имен, времени и связь с NBA API</h2>
+      <p class="tag">Устранение диакритических знаков, расчет игрового времени и обогащение метаданными.</p>
+
+      <div class="cols">
+        <div class="col">
+          <h3>Логика трансформации</h3>
+          <ul>
+            <li><b>Диакритика (Jokić ➔ Jokic):</b> Для исключения нестыковок в ID имена нормализуются через <code>unicodedata</code>.</li>
+            <li><b>Формат минут (MP):</b> Строка <code>"34:12"</code> конвертируется в числовой эквивалент (34.2 мин) для расчета темпа и PER.</li>
+            <li><b>Мерж с nba_api:</b> Basketball-Reference не отдает официальные фото игроков. Скрипт сопоставляет игроков с <code>nba_api</code> и генерирует прямые ссылки на CDN НБА.</li>
+          </ul>
+        </div>
+        <div class="col wide">
+          <h3>Код: etl/transforms.py</h3>
+          <pre class="code"><code><span class="k">import</span> unicodedata
+
+<span class="k">def</span> <span class="f">normalize_player_id</span>(name: <span class="t">str</span>) -> <span class="t">str</span>:
+    <span class="c"># Убираем европейские символы (č, ć, š -> c, c, s)</span>
+    nfkd = unicodedata.normalize(<span class="s">'NFKD'</span>, name)
+    clean = <span class="s">""</span>.join([c <span class="k">for</span> c <span class="k">in</span> nfkd <span class="k">if not</span> unicodedata.combining(c)])
+    <span class="k">return</span> clean.lower().replace(<span class="s">" "</span>, <span class="s">"_"</span>)
+
+<span class="k">def</span> <span class="f">parse_minutes</span>(mp_str: <span class="t">str</span>) -> <span class="t">float</span>:
+    <span class="k">if not</span> mp_str <span class="k">or</span> <span class="s">":"</span> <span class="k">not in</span> mp_str:
+        <span class="k">return</span> <span class="n">0.0</span>
+    m, s = mp_str.split(<span class="s">":"</span>)
+    <span class="k">return</span> <span class="t">round</span>(<span class="t">int</span>(m) + <span class="t">int</span>(s) / <span class="n">60.0</span>, <span class="n">1</span>)</code></pre>
+        </div>
+        <div class="col">
+          <h3>Проверки качества</h3>
+          <ul>
+            <li>Автоматический сброс аномалий (минуты > 60).</li>
+            <li>Удаление игроков DNP (Did Not Play) из финального набора данных.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ЭТАП 4 -->
+    <section class="stage-section card" id="stage-4">
+      <div class="stage-badge">04 · ХРАНЕНИЕ И ЗАГРУЗКА</div>
+      <h2>Идемпотентный UPSERT в PostgreSQL (Supabase)</h2>
+      <p class="tag">Пакетная запись чанками без дубликатов при повторных запусках пайплайна.</p>
+
+      <div class="cols">
+        <div class="col">
+          <h3>Архитектура базы данных</h3>
+          <ul>
+            <li><b>Реляционные таблицы:</b> Разделение на <code>games</code> (матчи), <code>boxscores</code> (статы) и <code>shots</code> (броски).</li>
+            <li><b>Идемпотентность:</b> Ключ <code>on_conflict="game_id, player_id"</code> позволяет скрипту безопасно перезапускаться в случае сбоя сети.</li>
+            <li><b>Batching (Чанки):</b> Запись сотен бросков пакетами по 500 строк снижает нагрузку на соединение.</li>
+          </ul>
+        </div>
+        <div class="col wide">
+          <h3>Код: etl/supabase_loader.py</h3>
+          <pre class="code"><code><span class="k">from</span> supabase <span class="k">import</span> create_client
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+<span class="k">def</span> <span class="f">load_shots_batch</span>(shots_list, chunk_size=<span class="n">500</span>):
+    <span class="k">for</span> i <span class="k">in</span> <span class="t">range</span>(<span class="n">0</span>, <span class="t">len</span>(shots_list), chunk_size):
+        chunk = shots_list[i : i + chunk_size]
+        <span class="c"># Идемпотентный upsert в Postgres</span>
+        supabase.table(<span class="s">"nba_shots"</span>).upsert(
+            chunk, 
+            on_conflict=<span class="s">"game_id, shot_id"</span>
+        ).execute()
+
+<span class="c"># Фиксация статуса в журнале запусков</span>
+supabase.table(<span class="s">"etl_runs_log"</span>).insert({
+    <span class="s">"status"</span>: <span class="s">"ok"</span>,
+    <span class="s">"games_processed"</span>: len(games)
+}).execute()</code></pre>
+        </div>
+        <div class="col">
+          <h3>Схема данных</h3>
+          <div class="tbl-mini">
+            <b>nba_games</b>
+            <span>game_id (PK), date, home_team, visitor_team</span>
+          </div>
+          <div class="tbl-mini">
+            <b>nba_boxscores</b>
+            <span>game_id + player_id (PK), pts, ast, reb, mp</span>
+          </div>
+          <div class="tbl-mini">
+            <b>nba_shots</b>
+            <span>shot_id (PK), x, y, made, period</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ЭТАП 5 -->
+    <section class="stage-section card" id="stage-5">
+      <div class="stage-badge">05 · ПРЕДСТАВЛЕНИЕ ДАННЫХ</div>
+      <h2>Оптимизация представлений (SQL Views) и дашборд</h2>
+      <p class="tag">Быстрые агрегаты на уровне базы и мгновенная отрисовка в браузере.</p>
+
+      <div class="cols">
+        <div class="col">
+          <h3>Клиентская оптимизация</h3>
+          <ul>
+            <li><b>SQL Views:</b> Тяжелые агрегации (средние показатели, TS%, USG%) вынесены в представления БД.</li>
+            <li><b>Безопасность (RLS):</b> Публичный anon-ключ открывает доступ только к <code>VIEW</code>, закрывая сырые таблицы.</li>
+            <li><b>Canvas Shot Chart:</b> Отрисовка сотен бросков на элементе <code>&lt;canvas&gt;</code> без нагрузки на DOM-дерево.</li>
+          </ul>
+        </div>
+        <div class="col wide">
+          <h3>SQL: schema/views.sql</h3>
+          <pre class="code"><code><span class="k">CREATE OR REPLACE VIEW</span> <span class="f">v_player_shot_summary</span> <span class="k">AS</span>
+<span class="k">SELECT</span> 
+    player_id,
+    <span class="t">count</span>(*) <span class="k">as</span> total_shots,
+    <span class="t">sum</span>(<span class="k">case when</span> made <span class="k">then</span> <span class="n">1</span> <span class="k">else</span> <span class="n">0</span> <span class="k">end</span>) <span class="k">as</span> made_shots,
+    <span class="t">round</span>(<span class="t">avg</span>(<span class="k">case when</span> made <span class="k">then</span> <span class="n">1.0</span> <span class="k">else</span> <span class="n">0.0</span> <span class="k">end</span>) * <span class="n">100</span>, <span class="n">1</span>) <span class="k">as</span> fg_pct
+<span class="k">FROM</span> nba_shots
+<span class="k">GROUP BY</span> player_id;
+
+<span class="c">-- Публичный доступ только к витрине данных</span>
+<span class="k">GRANT SELECT ON</span> v_player_shot_summary <span class="k">TO</span> anon;</code></pre>
+        </div>
+        <div class="col">
+          <h3>Результат</h3>
+          <p class="mu" style="font-size:14px; margin-bottom:14px;">Клиентский интерфейс загружает готовые агрегированные данные менее чем за 150 мс.</p>
+          <a class="btn pri" href="sport_new.html">Открыть дашборд</a>
+        </div>
+      </div>
+    </section>
+
+  </div>
 
   <section class="cta">
-    <a class="btn pri" href="jobs.html">Смотреть результат: дашборд вакансий</a>
-    <a class="btn" href="https://github.com/h0usehome" rel="noopener">Код на GitHub</a>
+    <a class="btn pri" href="sport_new.html">Перейти к дашборду NBA</a>
+    <a class="btn" href="https://github.com/h0usehome" target="_blank" rel="noopener">Исходный код на GitHub</a>
   </section>
 </main>
 
 <footer>
   <div class="w mu">
-    <span>Цифры в схеме берутся из журнала запусков в базе и обновляются при открытии страницы.</span>
-    <span>Python · PostgreSQL · GitHub Actions</span>
+    <span>Архитектура данных спроектирована и реализована Богданом Пинашиным.</span>
+    <span>Python · curl_cffi · Supabase (PostgreSQL) · Chart.js</span>
   </div>
 </footer>
 
-<script src="assets/js/pipeline-examples.js"></script>
 <script src="assets/js/pipeline.js"></script>
 </body>
 </html>
