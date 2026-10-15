@@ -86,108 +86,50 @@
     </div>
   </section>
 
-  <section class="sec" id="about">
-    <div class="w two">
-      <div style="flex:1 1 420px">
-        <div class="lbl">01 · Обо мне</div>
-        <h2 style="margin-bottom:14px">Превращаю данные в выводы, на которые можно опереться</h2>
-        <p class="mu" style="margin:0">[Самоучка, который мечтает работать с большими данными и находить в них то, что назаметно многим, и будет полезно ещё большему количеству людей]</p>
-      </div>
-      <div class="card facts" style="flex:1 1 320px">
-        <div><span class="mu">Имя</span><span>Богдан Пинашин</span></div>
-        <div><span class="mu">Город</span><span>Минск</span></div>
-        <div><span class="mu">Формат</span><span>Офис / Гибрид</span></div>
-        <div><span class="mu">Опыт</span><span>Жизненный</span></div>
-      </div>
-    </div>
-  </section>
-
-<section class="sec" id="dashboards">
+<section class="sec" id="about">
   <div class="w">
-    <div class="lbl">03 · Проекты</div>
-    <h2 style="margin-bottom:32px">Автоматизация и аналитика</h2>
+    <div class="lbl">01 · Обо мне</div>
+    <h2>Экономическое мышление и аналитика данных</h2>
     
-    <div class="project-list">
+    <div class="about-grid">
       
-      <!-- Проект 1: NBA -->
-      <a href="sport_new.html" class="project-row">
-        <div class="p-preview">
-          <img src="assets/img/nba.jpeg" alt="Логотип NBA">
-        </div>
-        <div class="p-info">
-          <div class="p-header">
-            <h3>NBA: Статистика вчерашних игр</h3>
-            <span class="p-status online">Ежедневное обновление</span>
-          </div>
-          <p class="p-desc">Автоматизированный ETL-пайплайн. Собирает данные по API, агрегирует статистику игроков и обновляет дашборд.</p>
-          <div class="p-skills">
-            <span class="p-chip"><svg width="14" height="14"><use href="#i-python"/></svg>Python</span>
-            <span class="p-chip"><svg width="14" height="14"><use href="#i-githubactions"/></svg>Git Actions</span>
-            <span class="p-chip"><svg width="14" height="14"><use href="#i-postgresql"/></svg>PostgreSQL</span>
-          </div>
-        </div>
-        <div class="p-action">Открыть ↗</div>
-      </a>
+      <!-- ЛЕВАЯ КОЛОНКА: Эссе (60%) -->
+      <div class="about-essay">
+        <p>Я закончил факультет цифровой экономики в <mark>Белорусском госудраственном экономическом университете</mark>. Мой академический бэкграунд заложил прочную базу, научив думать с экономической точки зрения над айти проектами, понимать <em>КАКИЕ</em> данные нужны для аналиитики, <em>ЧТО</em> делать с этими данными и <em>КАК</em> правильно их презентовать.</p>
+        
+        <p>Со временем фокус сместился в сторону веб-разработки, инженерии данных и продуктовой аналитики. Мне интересны автоматизация процессов, создание надежных ETL-пайплайнов и проектирование интерфейсов, которые превращают «сырые» массивы цифр в наглядные и интерактивные дашборды.</p>
+        
+        <p>Вне аналитики увлекаюсь кулинарией, фильмами, занимаюсь спортом, а также хожу иногда фотографирую. Хочу заняться диджеингом, чтобы сводить любимые треки. Считаю, что в аналитике без креативности не найти важные инсайты в огромных объемах данных.</p>
+      </div>
 
-      <!-- Проект 2: Formula 1 -->
-      <a href="f1.html" class="project-row">
-        <div class="p-preview">
-          <img src="assets/img/formula1.jpg" alt="Логотип Formula 1">
+      <!-- ПРАВАЯ КОЛОНКА: Вертикальный таймлайн (40%) -->
+      <div class="about-timeline">
+        <div class="timeline-item">
+          <div class="t-dot"></div>
+          <div class="t-date">2020 — 2024</div>
+          <div class="t-title">Белорусский государственный экономический университет</div>
+          <div class="t-desc">Изучение цифровой экономики, углубление в аналитику данных и программирование.</div>
         </div>
-        <div class="p-info">
-          <div class="p-header">
-            <h3>Formula 1: Телеметрия</h3>
-            <span class="p-status online">Работает</span>
-          </div>
-          <p class="p-desc">Анализ последней гонки: скорости, тайминги секторов и стратегия пит-стопов.</p>
-          <div class="p-skills">
-            <span class="p-chip"><svg width="14" height="14"><use href="#i-python"/></svg>Python</span>
-            <span class="p-chip"><svg width="14" height="14"><use href="#i-powerbi"/></svg>Power BI</span>
-          </div>
-        </div>
-        <div class="p-action">Открыть ↗</div>
-      </a>
 
-      <!-- Проект 3: Рынок вакансий -->
-      <a href="jobs.html" class="project-row">
-        <div class="p-preview">
-          <div class="placeholder" style="--bg-color: #FFCF40;">Data Jobs</div>
+        <div class="timeline-item">
+          <div class="t-dot"></div>
+          <div class="t-date">2025</div>
+          <div class="t-title">Дашборды и пайплайны</div>
+          <div class="t-desc">Разработка автоматизированных ETL-скриптов, работа с Excel, PostgreSQL и PowerBI.</div>
         </div>
-        <div class="p-info">
-          <div class="p-header">
-            <h3>Рынок вакансий: Аналитика данных</h3>
-            <span class="p-status">Статичный отчет</span>
-          </div>
-          <p class="p-desc">Исследование рынка труда: зарплатные вилки, востребованные навыки и распределение по регионам.</p>
-          <div class="p-skills">
-            <span class="p-chip"><svg width="14" height="14"><use href="#i-excel"/></svg>Excel</span>
-            <span class="p-chip"><svg width="14" height="14"><use href="#i-powerbi"/></svg>Power BI</span>
-          </div>
-        </div>
-        <div class="p-action">Открыть ↗</div>
-      </a>
 
-      <!-- Проект 4: Пайплайн (Архитектура) -->
-      <a href="pipeline.html" class="project-row">
-        <div class="p-preview">
-          <div class="placeholder" style="--bg-color: #3DDC97;">Pipeline</div>
+        <div class="timeline-item">
+          <div class="t-dot"></div>
+          <div class="t-date">2026</div>
+          <div class="t-title">Пет-проекты</div>
+          <div class="t-desc">Создание интерактивных пет-проектов, уровня NBA Analytics и каталогов фильмов.</div>
         </div>
-        <div class="p-info">
-          <div class="p-header">
-            <h3>Архитектура ETL-пайплайна</h3>
-            <span class="p-status">Документация</span>
-          </div>
-          <p class="p-desc">Схема движения данных: от парсинга API до финальной визуализации на дашборде.</p>
-          <div class="p-skills">
-            <span class="p-chip"><svg width="14" height="14"><use href="#i-supabase"/></svg>Supabase</span>
-          </div>
-        </div>
-        <div class="p-action">Читать ↗</div>
-      </a>
+      </div>
 
     </div>
   </div>
 </section>
+
 
  <section class="sec" id="skills">
   <div class="w two">
@@ -261,21 +203,182 @@
   </div>
 </section>
 
-  <section class="sec" id="contacts">
-    <div class="w two">
-      <div style="flex:1 1 320px">
-        <div class="lbl">04 · Контакты</div>
-        <h2 style="margin-bottom:14px">Обсудим вашу задачу</h2>
-        <p class="mu" style="margin:0">Опишите задачу или вопрос по коду. Отвечаю в течение [срок].</p>
-      </div>
-      <form id="contact" style="flex:1 1 380px">
-        <div><label for="n">Имя</label><input class="in" id="n" name="name" type="text" autocomplete="name" required></div>
-        <div><label for="e">Почта</label><input class="in" id="e" name="email" type="email" autocomplete="email" required></div>
-        <div><label for="m">Сообщение</label><textarea class="in" id="m" name="message" rows="4" required></textarea></div>
-        <button class="btn pri" type="submit">Отправить сообщение</button>
-      </form>
+
+<section class="sec" id="dashboards">
+  <div class="w">
+    <div class="lbl">03 · Проекты</div>
+    <h2 style="margin-bottom:32px">Автоматизация и аналитика</h2>
+    
+    <div class="project-list">
+      
+      <!-- Проект 1: NBA -->
+      <a href="sport_new.html" class="project-row">
+        <div class="p-preview">
+          <img src="assets/img/nba.jpeg" alt="Логотип NBA">
+        </div>
+        <div class="p-info">
+          <div class="p-header">
+            <h3>NBA: Статистика вчерашних игр</h3>
+            <span class="p-status online">Ежедневное обновление</span>
+          </div>
+          <p class="p-desc">Автоматизированный ETL-пайплайн. Собирает данные по API, агрегирует статистику игроков и обновляет дашборд.</p>
+          <div class="p-skills">
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-python"/></svg>Python</span>
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-githubactions"/></svg>Git Actions</span>
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-postgresql"/></svg>PostgreSQL</span>
+          </div>
+        </div>
+        <div class="p-action">Открыть ↗</div>
+      </a>
+
+      <!-- Проект 2: Formula 1 -->
+      <a href="f1.html" class="project-row">
+        <div class="p-preview">
+          <img src="assets/img/formula1.jpg" alt="Логотип Formula 1">
+        </div>
+        <div class="p-info">
+          <div class="p-header">
+            <h3>Formula 1: Телеметрия</h3>
+            <span class="p-status online">Работает</span>
+          </div>
+          <p class="p-desc">Анализ последней гонки: скорости, тайминги секторов и стратегия пит-стопов.</p>
+          <div class="p-skills">
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-python"/></svg>Python</span>
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-powerbi"/></svg>Power BI</span>
+          </div>
+        </div>
+        <div class="p-action">Открыть ↗</div>
+      </a>
+
+      <!-- Проект 3: Рынок вакансий -->
+      <a href="jobs.html" class="project-row">
+        <div class="p-preview">
+          <img src="assets/img/data_jobs.jpeg" alt="Data Analytics Job Market">
+        </div>
+        <div class="p-info">
+          <div class="p-header">
+            <h3>Рынок вакансий: Аналитика данных</h3>
+            <span class="p-status">Статичный отчет</span>
+          </div>
+          <p class="p-desc">Исследование рынка труда: зарплатные вилки, востребованные навыки и распределение по регионам.</p>
+          <div class="p-skills">
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-excel"/></svg>Excel</span>
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-powerbi"/></svg>Power BI</span>
+          </div>
+        </div>
+        <div class="p-action">Открыть ↗</div>
+      </a>
+
+      <!-- Проект 4: Пайплайн (Архитектура) -->
+      <a href="pipeline.html" class="project-row">
+        <div class="p-preview">
+          <img src="assets/img/data_pipeline.jpg" alt="Data Pipeline Architecture">
+        </div>
+        <div class="p-info">
+          <div class="p-header">
+            <h3>Архитектура ETL-пайплайна</h3>
+            <span class="p-status">Документация</span>
+          </div>
+          <p class="p-desc">Схема движения данных: от парсинга API до финальной визуализации на дашборде.</p>
+          <div class="p-skills">
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-supabase"/></svg>Supabase</span>
+          </div>
+        </div>
+        <div class="p-action">Читать ↗</div>
+      </a>
+
+      <!-- Проект 5: Каталог фильмов -->
+      <a href="https://h0usehome.github.io/top_films_by_me/" class="project-row">
+        <div class="p-preview">
+          <img src="assets/img/my_collection.jpeg" alt="Movie Catalog">
+        </div>
+        <div class="p-info">
+          <div class="p-header">
+            <h3>Моя коллекция: Кино и сериалы</h3>
+            <span class="p-status online">Интерактивный UI</span>
+          </div>
+          <p class="p-desc">Веб-каталог с фильтрацией по жанрам, кастомными подборками, модальными окнами для трейлеров и где-то даже с моими рецензиями.</p>
+          <div class="p-skills">
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-javascript"/></svg>JavaScript</span>
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-supabase"/></svg>Supabase</span>
+          </div>
+        </div>
+        <div class="p-action">Открыть ↗</div>
+      </a>
+
+      <a href="https://h0usehome.github.io/sonora/index.html#releases" class="project-row">
+        <div class="p-preview">
+          <img src="assets/img/sonora.jpeg" alt="Sonora Music">
+        </div>
+        <div class="p-info">
+          <div class="p-header">
+            <h3>Sonora: Лента музыкальных релизов</h3>
+            <span class="p-status">Блог и каталог</span>
+          </div>
+          <p class="p-desc">Журнальная верстка для музыкальных обзоров. Интеграция базы данных для хранения рецензий, треклистов и рейтинга.</p>
+          <div class="p-skills">
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-javascript"/></svg>JavaScript</span>
+            <span class="p-chip"><svg width="14" height="14"><use href="#i-supabase"/></svg>Supabase</span>
+          </div>
+        </div>
+        <div class="p-action">Открыть ↗</div>
+      </a>
+
     </div>
-  </section>
+  </div>
+</section>
+
+
+
+<section class="sec" id="contacts">
+  <div class="w">
+    <div class="lbl">04 · Контакты</div>
+    <h2>Давайте обсудим, чем я могу вам помочь</h2>
+    <p class="mu" style="margin-bottom: 32px;">Открыт к предложениям по аналитике данных, разработке дашбордов и созданию ETL-пайплайнов.</p>
+    
+    <!-- Bento-сетка контактов -->
+    <div class="bento-contacts">
+      
+      <!-- Карточка 1: Telegram -->
+      <a href="https://t.me/pinashin_bogdan" target="_blank" class="bento-card telegram">
+        <div class="bc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2L2 9.5l7.5 3.5L21.5 2z"/><path d="M9.5 13L13 21.5L21.5 2"/></svg>
+        </div>
+        <div class="bc-info">
+          <span class="bc-label">Telegram</span>
+          <span class="bc-value">@pinashin_bogdan</span>
+        </div>
+        <span class="bc-arrow">↗</span>
+      </a>
+
+      <!-- Карточка 2: Email (с интерактивным копированием) -->
+      <div class="bento-card email" onclick="copyEmail(this, 'pinashin.official@gmail.com')">
+        <div class="bc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div class="bc-info">
+          <span class="bc-label">Email</span>
+          <span class="bc-value email-text">pinashin.official@gmail.com</span>
+        </div>
+        <span class="bc-action-hint">Копировать</span>
+      </div>
+
+      <!-- Карточка 3: Телефон / Мессенджер -->
+      <a href="tel:+375291606175" class="bento-card phone">
+        <div class="bc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </div>
+        <div class="bc-info">
+          <span class="bc-label">Телефон</span>
+          <span class="bc-value">+375 (29) 160-61-75</span>
+        </div>
+        <span class="bc-arrow">↗</span>
+      </a>
+
+    </div>
+  </div>
+</section>
+
 </main>
 
 <footer>

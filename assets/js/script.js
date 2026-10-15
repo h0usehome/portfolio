@@ -101,4 +101,55 @@ if (grid && proofPanel) {
     });
 }
 
+// Делаем функцию доступной глобально из HTML-атрибута onclick
+window.copyEmail = function(cardElement, emailText) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(emailText).then(() => {
+            showSuccess(cardElement);
+        }).catch(() => {
+            fallbackCopy(emailText, cardElement);
+        });
+    } else {
+        fallbackCopy(emailText, cardElement);
+    }
+};
+
+function fallbackCopy(text, cardElement) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.opacity = "0";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showSuccess(cardElement);
+        }
+    } catch (err) {
+        console.error('Ошибка при копировании: ', err);
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+function showSuccess(cardElement) {
+    const hint = cardElement.querySelector('.bc-action-hint');
+    if (!hint) return;
+    const originalText = hint.textContent;
+    
+    hint.textContent = 'Скопировано! ✓';
+    hint.style.color = '#3DDC97';
+    
+    setTimeout(() => {
+        hint.textContent = originalText;
+        hint.style.color = '';
+    }, 2000);
+}
+
+
 });
