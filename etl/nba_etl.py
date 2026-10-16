@@ -102,16 +102,18 @@ def get(url: str, retries: int = 3):
         if wait > 0:
             time.sleep(wait)
             
-        # Используем impersonate для полной подделки под Chrome
-        r = curl_requests.get(url, impersonate="chrome110", timeout=30)
+        # Обновляем профиль маскировки на более актуальный
+        r = curl_requests.get(url, impersonate="chrome120", timeout=30)
         
         _last_request = time.time()
-        if r.status_code == 429:
+        
+        # Добавляем 403 ошибку в условия ретрая
+        if r.status_code in (429, 403):
             delay = 60 * (attempt + 1)
-            print(f'  429 Too Many Requests, жду {delay} с...')
+            print(f'  {r.status_code} Blocked, жду {delay} с...')
             time.sleep(delay)
             continue
-        # Для curl_cffi проверка ошибок выглядит так же
+            
         r.raise_for_status()
         return r
     raise RuntimeError(f'Не удалось получить {url}')
@@ -437,12 +439,12 @@ def fetch_news():
     rows = []
     for source, url in NEWS_FEEDS:
         try:
-            r = requests.get(url, headers=HEADERS, timeout=30)
+            r = curl_requests.get(url, headers=HEADERS, impersonate="chrome120", timeout=30)
             r.raise_for_status()
             part = parse_rss(r.text, source)
             print(f'  {source}: {len(part)} новостей')
             rows += part
-        except Exception as e:                    # одна упавшая лента не должна останавливать остальные
+        except Exception as e:                    
             print(f'  {source}: ОШИБКА {type(e).__name__}: {e}')
     if not rows:
         print('Новостей не получено')
