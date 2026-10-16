@@ -25,7 +25,7 @@ const state = {
   games: [], shots: [], top: [], lineups: [], news: [], teamAssets: [], playerAssets: [],
   teamLogo: new Map(), photos: new Map(),
   f: { game: 'all', team: 'all', player: 'all', quarter: 'all' },
-  mode: 'density', leftView: 'players',
+  mode: 'dots', leftView: 'players',
 };
 
 /* ============================== Утилиты ============================== */
@@ -256,14 +256,25 @@ function renderSubtitle() {
 
 function renderResults() {
   const box = $('#results'); box.replaceChildren();
-  const all = h('button', { type: 'button', class: 'chip-game all', 'aria-pressed': state.f.game === 'all', text: 'Все матчи' });
+  
+  // Явно передаем 'true' или 'false' текстом
+  const all = h('button', { type: 'button', class: 'chip-game all', 'aria-pressed': state.f.game === 'all' ? 'true' : 'false', text: 'Все матчи' });
   all.onclick = () => setFilter('game', 'all');
   box.append(all);
+  
   for (const g of state.games) {
     const hw = num(g.home_pts) > num(g.visitor_pts);
     const line = (abbr, pts, win) => h('span', { class: `tm ${win ? 'win' : 'lose'}` }, teamLogo(abbr), h('span', { class: 'ab', text: abbr }), h('b', { text: pts }));
-    const btn = h('button', { type: 'button', class: 'chip-game', 'aria-pressed': state.f.game === g.game_id, 'aria-label': `${g.visitor_abbr} ${g.visitor_pts}, ${g.home_abbr} ${g.home_pts}` },
-      line(g.visitor_abbr, g.visitor_pts, !hw), line(g.home_abbr, g.home_pts, hw));
+    
+    // Здесь тоже заменяем булево значение на строку
+    const btn = h('button', { 
+        type: 'button', 
+        class: 'chip-game', 
+        'aria-pressed': state.f.game === g.game_id ? 'true' : 'false', 
+        'aria-label': `${g.visitor_abbr} ${g.visitor_pts}, ${g.home_abbr} ${g.home_pts}` 
+      },
+      line(g.visitor_abbr, g.visitor_pts, !hw), line(g.home_abbr, g.home_pts, hw)
+    );
     btn.onclick = () => setFilter('game', g.game_id);
     box.append(btn);
   }
@@ -362,34 +373,22 @@ function renderStats() {
 
 /** Левая панель: лучшие игроки (с фото) и лучшие связки (с фото участников). */
 function renderLeft() {
-  const tabs = [...document.querySelectorAll('#leftTabs button')];
-  for (const b of tabs) {
-    const v = b.dataset.view;
-    b.hidden = !(v === 'players' ? state.top.length : state.lineups.some((l) => String(l.lineup_type) === v));
-  }
-  const visible = tabs.filter((b) => !b.hidden);
-  if (!visible.some((b) => b.dataset.view === state.leftView)) state.leftView = visible[0]?.dataset.view || 'players';
-  tabs.forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === state.leftView));
+  // Скрываем блок с кнопками вкладок, так как вкладка теперь одна
+  const tabs = $('#leftTabs');
+  if (tabs) tabs.hidden = true;
 
   const ol = $('#leftList'); ol.replaceChildren();
   const meta = (abbr, text) => h('span', {}, teamLogo(abbr, 16), h('span', { text }));
-  if (state.leftView === 'players') {
-    $('#leftNote').textContent = 'Очки + передачи − потери за ночь';
-    if (!state.top.length) return ol.append(h('li', { class: 'mu', text: 'Нет данных' }));
-    state.top.forEach((p, i) => ol.append(h('li', { class: 'has-avatar' },
-      h('span', { class: 'rank', text: i + 1 }), avatar(p.player_id, p.player_name),
-      h('div', { class: 'who' }, h('b', { text: p.player_name }), meta(p.team_abbr, `${num(p.pts)} оч · ${num(p.ast)} аст · ${num(p.tov)} пот`)),
-      h('div', { class: 'score' }, String(num(p.score)), h('small', { text: 'баллов' })))));
-    return;
-  }
-  $('#leftNote').textContent = 'Сезонные данные команд, игравших этой ночью. Очки за 100 владений';
-  const rows = state.lineups.filter((l) => String(l.lineup_type) === state.leftView);
-  if (!rows.length) return ol.append(h('li', { class: 'mu', text: 'Нет данных' }));
-  rows.forEach((l, i) => ol.append(h('li', {},
-    h('span', { class: 'rank', text: i + 1 }),
-    h('div', { class: 'who' }, h('b', { text: l.lineup }), meta(l.team_abbr, `${fmt(l.minutes_played, 0)} мин · +/- ${num(l.plus_minus)}`)),
-    h('div', { class: 'score' }, fmt(l.pts_per_100_poss, 1), h('small', { text: 'очк./100' })),
-    Array.isArray(l.player_ids) && l.player_ids.length ? h('div', { class: 'avatars' }, l.player_ids.map((pid) => avatar(pid, state.photos.get(pid)?.name || pid, 'sm'))) : null)));
+  
+  $('#leftNote').textContent = 'Очки + передачи − потери за ночь';
+  
+  if (!state.top.length) return ol.append(h('li', { class: 'mu', text: 'Нет данных' }));
+  
+  state.top.forEach((p, i) => ol.append(h('li', { class: 'has-avatar' },
+    h('span', { class: 'rank', text: i + 1 }), avatar(p.player_id, p.player_name),
+    h('div', { class: 'who' }, h('b', { text: p.player_name }), meta(p.team_abbr, `${num(p.pts)} оч · ${num(p.ast)} аст · ${num(p.tov)} пот`)),
+    h('div', { class: 'score' }, String(num(p.score)), h('small', { text: 'баллов' }))
+  )));
 }
 
 function renderNews() {
@@ -480,7 +479,7 @@ async function init() {
     Object.assign(state, demoData());
   } else {
     // блоки грузятся независимо: сбой одного не ломает остальные
-    const jobs = { games: 'v_nba_last_games', shots: 'v_nba_last_shots', top: 'v_nba_top_players', lineups: 'v_nba_best_lineups', news: 'v_nba_news' };
+    const jobs = { games: 'v_nba_last_games', shots: 'v_nba_last_shots', top: 'v_nba_top_players', news: 'v_nba_news' };
     const optional = { teamAssets: 'v_nba_team_assets', playerAssets: 'v_nba_player_assets' };   // логотипы и фото: без них страница работает
     const res = await Promise.allSettled([...Object.values(jobs), ...Object.values(optional)].map((v) => rest(v)));
     [...Object.keys(jobs), ...Object.keys(optional)].forEach((k, i) => {
@@ -493,6 +492,19 @@ async function init() {
   state.teamLogo = new Map(state.teamAssets.map((r) => [r.team_id, r.logo_url]));
   state.photos = new Map(state.playerAssets.map((r) => [r.player_id, { url: r.photo_url, name: r.player_name }]));
   fitView(state.shots);
+
+if (state.games && state.games.length > 0) {
+    state.f.game = state.games[0].game_id;
+  }
+
   renderSubtitle(); renderAll(); renderLeft(); renderNews();
+
+
+
+
 }
+
+
+
+
 init();

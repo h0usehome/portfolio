@@ -37,10 +37,15 @@ PAUSE = 1.0
 RAW_RETENTION_DAYS = 30
 ACTIVE_WINDOW_DAYS = 2          # вакансия активна, если её видели не позже чем 2 дня назад (согласовано с SQL-view)
 
-# Приблизительные курсы к EUR для сравнения зарплат. Это не котировки: обновляйте вручную или подключите ленту ЕЦБ.
-FX_TO_EUR = {'EUR': 1.0, 'USD': 0.92, 'GBP': 1.17, 'CHF': 1.05, 'CAD': 0.68, 'AUD': 0.60, 'PLN': 0.23}
+# Обнови курсы валют (примерные)
+FX_TO_EUR = {'EUR': 1.0, 'USD': 0.92, 'GBP': 1.17, 'CHF': 1.05, 'CAD': 0.68, 'AUD': 0.60, 'PLN': 0.23, 'RUB': 0.010, 'BYN': 0.28}
 
+# Добавь коды, которые отдает HH (RUR и BYR)
+CURRENCY = {'us$': 'USD', '$': 'USD', 'usd': 'USD', '€': 'EUR', 'eur': 'EUR', '£': 'GBP', 'gbp': 'GBP',
+            'chf': 'CHF', 'cad': 'CAD', 'aud': 'AUD', 'pln': 'PLN', 
+            'rur': 'RUB', 'rub': 'RUB', 'byr': 'BYN', 'byn': 'BYN'}
 
+HH_API_URL = 'https://api.hh.ru/vacancies'
 # ================================================================ нормализация
 def strip_html(text: str) -> str:
     return html.unescape(re.sub(r'<[^>]+>', ' ', text or ''))
@@ -71,9 +76,6 @@ def classify_seniority(title: str) -> str:
         return 'Senior'
     return 'Middle'
 
-
-CURRENCY = {'us$': 'USD', '$': 'USD', 'usd': 'USD', '€': 'EUR', 'eur': 'EUR', '£': 'GBP', 'gbp': 'GBP',
-            'chf': 'CHF', 'cad': 'CAD', 'aud': 'AUD', 'pln': 'PLN'}
 
 
 def parse_salary(text):
@@ -191,27 +193,86 @@ def http_get_json(url, params=None, retries=3):
     raise RuntimeError(f'Не удалось получить {url}')
 
 
-def fetch_remotive():
-    """Все вакансии категории data одним запросом (постраничности у API нет)."""
-    return http_get_json(REMOTIVE_URL, {'category': 'data'}).get('jobs', [])
-
-
-def fetch_arbeitnow():
-    jobs, url = [], ARBEITNOW_URL
-    for page in range(ARBEITNOW_MAX_PAGES):
-        data = http_get_json(url)
-        jobs += data.get('data', [])
-        url = (data.get('links') or {}).get('next')
-        if not url:
+def fetch_hh_base(area_id: int) -> list:
+    """Универсальный скачиватель для API HeadHunter."""
+    jobs = []
+    # Ищем целевые data-профессии в названиях вакансий
+    query = '("data analyst" OR "аналитик данных" OR "data engineer" OR "инженер данных" OR "data scientist" OR "bi analyst" OR "machine learning")'
+    
+    for page in range(20):
+        params = {
+            'text': query,
+            'area': area_id,
+            'per_page': 100,
+            'page': page,
+            'search_field': 'name'
+        }
+        data = http_get_json(HH_API_URL, params)
+        items = data.get('items', [])
+        if not items:
+            break
+            
+        jobs.extend(items)
+        if page >= data.get('pages', 1) - 1:
             break
         time.sleep(PAUSE)
+        
     return jobs
+
+def fetch_hh_ru():
+    return fetch_hh_base(113)  # 113 - код России в HH
+
+def fetch_rabota_by():
+    return fetch_hh_base(16)   # 16 - код Беларуси в HH
+
+
+def normalize_hh(j, today, source_name='hh_ru'):
+    # Форматируем зарплату для встроенного парсера (force 'per month')
+    sal_text = None
+    if j.get('salary'):
+        s = j['salary']
+        sal_val = s.get('from') or s.get('to')
+        sal_text = f"{sal_val} - {s.get('to') or sal_val} {s.get('currency')} per month"
+
+    # Извлекаем навыки из короткого сниппета
+    snippet = j.get('snippet') or {}
+    desc = f"{snippet.get('requirement', '')} {snippet.get('responsibility', '')}"
+
+    employer = j.get('employer', {}).get('name')
+    location = j.get('area', {}).get('name')
+    schedule = j.get('schedule', {}).get('id')
+    employment = j.get('employment', {}).get('name')
+
+    posting, skills = build_posting(
+        source=source_name,
+        source_id=j.get('id'),
+        title=j.get('name'),
+        company=employer,
+        category=None,
+        tags=[],
+        description=desc,
+        location=location,
+        is_remote=(schedule == 'remote'),
+        job_type=employment,
+        url=j.get('alternate_url'),
+        published=j.get('published_at'),
+        salary_text=sal_text,
+        today=today
+    )
+    return posting, skills
+
+def normalize_hh_ru(j, today):
+    return normalize_hh(j, today, source_name='hh_ru')
+
+def normalize_rabota_by(j, today):
+    return normalize_hh(j, today, source_name='rabota_by')
 
 
 SOURCES = {
-    'remotive': (fetch_remotive, normalize_remotive),
-    'arbeitnow': (fetch_arbeitnow, normalize_arbeitnow),
+    'hh_ru': (fetch_hh_ru, normalize_hh_ru),
+    'rabota_by': (fetch_rabota_by, normalize_rabota_by),
 }
+
 
 
 # ================================================================ quality
@@ -266,6 +327,8 @@ def load(sb, source, postings, skills_by_key, raw_rows, today):
 def chunks(items, size):
     for i in range(0, len(items), size):
         yield items[i:i + size]
+
+
 
 
 # ================================================================ запуск источника

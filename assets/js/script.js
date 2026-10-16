@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             sections.forEach(section => {
                 const sectionTop = section.offsetTop;
-                if (scrollY >= sectionTop - 300) { 
+                if (scrollY >= sectionTop - 800) { 
                     current = section.getAttribute('id');
                 }
             });

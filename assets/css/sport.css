@@ -31,6 +31,7 @@ section.w{margin-bottom:20px}
   background:
     radial-gradient(900px 240px at 0% 0%, color-mix(in srgb,var(--ac) 16%, transparent), transparent 65%),
     var(--sf);
+  margin-top: 24px; margin-bottom: 24px;
 }
 .hero-card::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:3px;border-radius:0 3px 3px 0;background:var(--ac)}
 .crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--mu);margin-bottom:6px}
@@ -41,10 +42,18 @@ section.w{margin-bottom:20px}
 .hero-label{font-size:12px;color:var(--mu);margin-bottom:8px}
 
 /* Табло матчей */
-.results{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.results{
+    display:flex;
+    gap:10px;
+    overflow-x:auto;
+    padding-bottom:6px;
+    scrollbar-width:thin;
+    padding-top: 10px;
+  
+  }
 .chip-game{flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch;gap:5px;min-width:122px;padding:9px 12px;background:rgba(10,10,12,.55);border:1px solid var(--bd);border-radius:12px;color:var(--tx);cursor:pointer;font:inherit;text-align:left;transition:border-color .15s,transform .15s}
 .chip-game:hover{border-color:var(--ac);transform:translateY(-1px)}
-.chip-game[aria-pressed=true]{background:color-mix(in srgb,var(--ac) 10%,var(--sf));border-color:var(--ac);box-shadow:0 0 0 1px var(--ac) inset}
+.chip-game[aria-pressed=true]{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac) inset}
 .chip-game.all{justify-content:center;align-items:center;min-width:92px;font-size:14px}
 .tm{display:flex;align-items:center;gap:8px;line-height:1.2}
 .tm .ab{flex:1;font-size:13px;letter-spacing:.02em}
@@ -95,10 +104,14 @@ section.w{margin-bottom:20px}
     margin-bottom: 14px;
     gap: 12px;
 }
-.map-top h2{margin:0;justify-self: start; /* Прижимаем заголовок к левому краю */}
+.map-top h2{
+    margin-left:20px;
+    justify-self: start;
+  }
+
 .map-top .seg {
     margin: 0;
-    justify-self: end; /* Прижимаем кнопки к правому краю */
+    justify-self: center; 
 }
 .court{position:relative;--ar:1.0357;aspect-ratio:var(--ar);width:min(100%, max(460px, calc((100vh - 220px) * var(--ar))));border-radius:12px;overflow:hidden;background:#0E141C;border:1px solid var(--bd);margin:0 auto}
 .court canvas, .court svg{position:absolute;inset:0;width:100%;height:100%}
@@ -121,7 +134,8 @@ section.w{margin-bottom:20px}
     width: 200px;
     height: 8px;
     border-radius: 4px;
-    margin-top: -1px; /* Микро-коррекция для идеального визуального выравнивания шрифта */
+    margin-top: 20px;
+    justify-content: center;
 }
 @media (max-width: 760px) {
     .map-top {
