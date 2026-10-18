@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marketing Intelligence Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg-base: #080d18;
+    --bg-surface: #0d1526;
+    --bg-card: #111c33;
+    --bg-elevated: #162040;
+    --border: rgba(99,140,255,0.12);
+    --border-bright: rgba(99,140,255,0.28);
+    --accent-blue: #4d7cff;
+    --accent-cyan: #00d4c8;
+    --accent-violet: #8b5cf6;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+    --accent-emerald: #10b981;
+    --text-primary: #e8eeff;
+    --text-secondary: #7a90c4;
+    --text-muted: #3d5080;
+    --glow-blue: rgba(77,124,255,0.15);
+    --glow-cyan: rgba(0,212,200,0.12);
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-display);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -40%;
+    left: -20%;
+    width: 80%;
+    height: 80%;
+    background: radial-gradient(ellipse, rgba(77,124,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -30%;
+    right: -10%;
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(ellipse, rgba(139,92,246,0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(8,13,24,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0 10px;
+  }
+
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-primary);
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent-emerald);
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent-emerald);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  /* ── FILTERS ── */
+  .filters-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0 14px;
+    flex-wrap: wrap;
+  }
+
+  .filter-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+    margin-right: 4px;
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .filter-select {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: var(--font-display);
+    font-size: 12px;
+    padding: 6px 28px 6px 12px;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237a90c4' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .filter-select:focus, .filter-select:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px var(--glow-blue);
+  }
+
+  .filter-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+  }
+
+  .btn-apply {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 18px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+
+  .btn-apply:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-apply:active { transform: translateY(0); }
+
+  /* ── MAIN ── */
+  .main {
+    position: relative;
+    z-index: 1;
+    padding: 24px 28px 40px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .section-title {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── KPI GRID ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.25s, transform 0.2s, box-shadow 0.25s;
+    animation: fadeUp 0.5s both;
+  }
+
+  .kpi-card:hover {
+    border-color: var(--border-bright);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .kpi-card.blue::before { background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan)); }
+  .kpi-card.violet::before { background: linear-gradient(90deg, var(--accent-violet), var(--accent-blue)); }
+  .kpi-card.cyan::before { background: linear-gradient(90deg, var(--accent-cyan), var(--accent-emerald)); }
+  .kpi-card.amber::before { background: linear-gradient(90deg, var(--accent-amber), var(--accent-rose)); }
+  .kpi-card.emerald::before { background: linear-gradient(90deg, var(--accent-emerald), var(--accent-cyan)); }
+  .kpi-card.rose::before { background: linear-gradient(90deg, var(--accent-rose), var(--accent-violet)); }
+
+  .kpi-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .kpi-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+
+  .kpi-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+  }
+
+  .kpi-value {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+    transition: all 0.4s;
+  }
+
+  .kpi-sub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  .kpi-delta {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .kpi-delta.up { background: rgba(16,185,129,0.15); color: var(--accent-emerald); }
+  .kpi-delta.down { background: rgba(244,63,94,0.15); color: var(--accent-rose); }
+
+  .kpi-prev { color: var(--text-muted); font-size: 10px; }
+
+  .sparkline-container {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 80px;
+    height: 40px;
+    opacity: 0.35;
+  }
+
+  /* ── CHARTS GRID ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .charts-grid-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.6s both;
+  }
+
+  .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .chart-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .chart-subtitle {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    margin-top: 2px;
+  }
+
+  .chart-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .chip {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    background: transparent;
+    transition: all 0.2s;
+  }
+
+  .chip.active, .chip:hover {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+    background: var(--glow-blue);
+  }
+
+  .chart-wrap {
+    position: relative;
+    height: 220px;
+  }
+
+  /* ── FUNNEL v2 ── */
+  .funnel-v2 { padding: 4px 0 0; }
+
+  .funnel-visual {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+
+  .fv-step {
+    position: relative;
+    cursor: pointer;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.18s, box-shadow 0.18s;
+  }
+
+  .fv-step:hover { transform: translateX(4px); box-shadow: -4px 0 0 var(--accent-blue); }
+
+  .fv-bg {
+    height: 44px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.05);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .fv-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    border-radius: 10px;
+    transition: width 1s cubic-bezier(0.16,1,0.3,1);
+    opacity: 0.28;
+  }
+
+  .fv-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  .fv-emoji { font-size: 18px; flex-shrink: 0; }
+
+  .fv-info { flex: 1; min-width: 0; }
+
+  .fv-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+
+  .fv-desc {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  .fv-numbers {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+  }
+
+  .fv-count {
+    font-size: 14px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  .fv-pct {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .fv-arrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    margin: -2px 0;
+    z-index: 1;
+    position: relative;
+  }
+
+  .fv-arrow-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .fv-arrow-badge {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    white-space: nowrap;
+  }
+
+  /* FUNNEL TOTALS SUMMARY */
+  .fv-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .fv-sum-cell {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+
+  .fv-sum-label { font-size: 9px; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; }
+  .fv-sum-val { font-size: 15px; font-weight: 800; margin-top: 3px; }
+
+  /* ── CHANNEL CARDS v2 ── */
+  .channel-cards { display: flex; flex-direction: column; gap: 10px; }
+
+  .ch-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.18s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ch-card:hover {
+    border-color: var(--border-bright);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+  }
+
+  .ch-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    border-radius: 12px 0 0 12px;
+  }
+
+  .ch-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .ch-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 900;
+    flex-shrink: 0;
+  }
+
+  .ch-name-block { flex: 1; }
+
+  .ch-name { font-size: 13px; font-weight: 700; }
+  .ch-tagline { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+  .ch-badge {
+    font-size: 11px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    padding: 4px 10px;
+    border-radius: 8px;
+  }
+
+  .ch-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .ch-met {
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    padding: 6px 8px;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .ch-met-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .ch-met-val {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+  }
+
+  .ch-meter-bg {
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+
+  .ch-meter-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  /* CONVERSION TREND CHART */
+  .conv-trend-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.65s both;
+  }
+
+  .conv-tab-group {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-surface);
+    border-radius: 10px;
+    padding: 3px;
+  }
+
+  .conv-tab {
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    color: var(--text-muted);
+    border: none;
+    background: transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .conv-tab.active {
+    background: var(--accent-blue);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .conv-tab:not(.active):hover { color: var(--text-primary); }
+
+  .conv-chart-wrap {
+    height: 200px;
+    margin-top: 16px;
+    position: relative;
+  }
+
+  .conv-legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .conv-leg-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+  }
+
+  .conv-leg-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  /* ── SMART INSIGHTS ── */
+  .insights-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.7s both;
+  }
+
+  .insights-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .insights-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--accent-violet);
+    background: rgba(139,92,246,0.12);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(139,92,246,0.2);
+  }
+
+  .insights-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  @media (max-width: 900px) { .insights-grid { grid-template-columns: 1fr; } }
+
+  .insight-item {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .insight-item:hover {
+    border-color: var(--border-bright);
+    transform: translateY(-1px);
+  }
+
+  .insight-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 10px 0 0 10px;
+  }
+
+  .insight-item.anomaly::before { background: var(--accent-rose); }
+  .insight-item.positive::before { background: var(--accent-emerald); }
+  .insight-item.warning::before { background: var(--accent-amber); }
+
+  .insight-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+
+  .insight-tag.anomaly { background: rgba(244,63,94,0.12); color: var(--accent-rose); }
+  .insight-tag.positive { background: rgba(16,185,129,0.12); color: var(--accent-emerald); }
+  .insight-tag.warning { background: rgba(245,158,11,0.12); color: var(--accent-amber); }
+
+  .insight-text {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-primary);
+  }
+
+  .insight-metric {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    margin-top: 6px;
+  }
+
+  /* ── SQL / DATA QUALITY BLOCK ── */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.8s both;
+  }
+
+  .tech-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .tech-card-title {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tech-card-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+
+  .code-block {
+    background: var(--bg-base);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    overflow-x: auto;
+    margin-bottom: 10px;
+  }
+
+  .code-block .kw { color: var(--accent-blue); }
+  .code-block .fn { color: var(--accent-cyan); }
+  .code-block .cm { color: var(--text-muted); }
+  .code-block .str { color: var(--accent-emerald); }
+  .code-block .num { color: var(--accent-amber); }
+
+  .dq-list { list-style: none; }
+
+  .dq-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+
+  .dq-item:last-child { border-bottom: none; }
+
+  .dq-status {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .dq-status.ok { background: rgba(16,185,129,0.2); color: var(--accent-emerald); }
+  .dq-status.warn { background: rgba(245,158,11,0.2); color: var(--accent-amber); }
+  .dq-status.err { background: rgba(244,63,94,0.2); color: var(--accent-rose); }
+
+  .dq-text { color: var(--text-primary); line-height: 1.4; }
+  .dq-detail { color: var(--text-muted); font-size: 10px; font-family: var(--font-mono); margin-top: 2px; }
+
+  /* ── DRILL DOWN MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-bright);
+    border-radius: 18px;
+    padding: 28px;
+    width: 560px;
+    max-width: 92vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    transform: translateY(20px) scale(0.97);
+    transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+  }
+
+  .modal-overlay.active .modal {
+    transform: translateY(0) scale(1);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s;
+  }
+
+  .modal-close:hover { background: rgba(244,63,94,0.15); border-color: var(--accent-rose); color: var(--accent-rose); }
+
+  .modal-drill-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .drill-stat {
+    background: var(--bg-card);
+    border-radius: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+  }
+
+  .drill-stat-label { font-size: 10px; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; }
+  .drill-stat-val { font-size: 20px; font-weight: 800; margin-top: 4px; }
+
+  .modal-chart-wrap { height: 180px; margin-top: 16px; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .kpi-card:nth-child(1) { animation-delay: 0.05s; }
+  .kpi-card:nth-child(2) { animation-delay: 0.1s; }
+  .kpi-card:nth-child(3) { animation-delay: 0.15s; }
+  .kpi-card:nth-child(4) { animation-delay: 0.2s; }
+  .kpi-card:nth-child(5) { animation-delay: 0.25s; }
+  .kpi-card:nth-child(6) { animation-delay: 0.3s; }
+  .kpi-card:nth-child(7) { animation-delay: 0.35s; }
+  .kpi-card:nth-child(8) { animation-delay: 0.4s; }
+
+  /* ── TOOLTIP ── */
+  .tooltip-hint {
+    position: absolute;
+    bottom: 8px;
+    right: 10px;
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    pointer-events: none;
+  }
+
+  /* ── RETENTION ── */
+  .retention-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-top: 10px;
+  }
+
+  .ret-cell {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  .ret-cell:hover { transform: scale(1.1); }
+
+  .ret-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    text-align: center;
+    margin-bottom: 3px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<header class="header">
+  <div class="header-top">
+    <div class="logo-area">
+      <div class="logo-icon">📡</div>
+      <div>
+        <div class="logo-text">Marketing Intelligence</div>
+        <div class="logo-sub">Performance Dashboard · v2.4</div>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        LIVE DATA
+      </div>
+      <span>Обновлено: <span id="lastUpdate"></span></span>
+      <span style="color: var(--text-muted)">|</span>
+      <span>UTC+3</span>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <span class="filter-label">Фильтры:</span>
+
+    <div class="filter-group">
+      <span class="filter-label">Период</span>
+      <select class="filter-select" id="filterPeriod" onchange="applyFilters()">
+        <option value="7d">7 дней</option>
+        <option value="30d" selected>30 дней</option>
+        <option value="90d">90 дней</option>
+        <option value="ytd">С начала года</option>
+      </select>
+    </div>
+
+    <div class="filter-divider"></div>
+
+    <div class="filter-group">
+      <span class="filter-label">Регион</span>
+      <select class="filter-select" id="filterRegion" onchange="applyFilters()">
+        <option value="all">Все регионы</option>
+        <option value="msk">Москва</option>
+        <option value="spb">Санкт-Петербург</option>
+        <option value="ekb">Екатеринбург</option>
+        <option value="nsk">Новосибирск</option>
+      </select>
+    </div>
+
+    <div class="filter-divider"></div>
+
+    <div class="filter-group">
+      <span class="filter-label">Канал</span>
+      <select class="filter-select" id="filterChannel" onchange="applyFilters()">
+        <option value="all">Все каналы</option>
+        <option value="google">Google</option>
+        <option value="meta">Meta</option>
+        <option value="tiktok">TikTok</option>
+        <option value="yandex">Яндекс</option>
+      </select>
+    </div>
+
+    <div class="filter-divider"></div>
+
+    <div class="filter-group">
+      <span class="filter-label">Таргет</span>
+      <select class="filter-select" id="filterTarget" onchange="applyFilters()">
+        <option value="all">Все аудитории</option>
+        <option value="cold">Холодная</option>
+        <option value="warm">Тёплая</option>
+        <option value="retarget">Ретаргет</option>
+        <option value="lal">Look-alike</option>
+      </select>
+    </div>
+
+    <button class="btn-apply" onclick="applyFilters()">Применить</button>
+  </div>
+</header>
+
+<!-- ═══════════════════ MAIN ═══════════════════ -->
+<main class="main">
+
+  <!-- KPI SECTION -->
+  <div class="section-title">Ключевые показатели</div>
+  <div class="kpi-grid" id="kpiGrid">
+
+    <div class="kpi-card blue" onclick="openDrill('revenue')">
+      <div class="kpi-header">
+        <div>
+          <div class="kpi-label">Выручка</div>
+        </div>
+        <div class="kpi-icon" style="background:rgba(77,124,255,0.15)">💰</div>
+      </div>
+      <div class="kpi-value" id="kpi-revenue" style="color:var(--accent-blue)">₽14.2М</div>
+      <div class="kpi-sub">
+        <span class="kpi-delta up">▲ 18.4%</span>
+        <span class="kpi-prev">vs пред. период</span>
+      </div>
+      <div class="tooltip-hint">← drill-down</div>
+    </div>
+
+    <div class="kpi-card violet" onclick="openDrill('orders')">
+      <div class="kpi-header">
+        <div><div class="kpi-label">Заказы</div></div>
+        <div class="kpi-icon" style="background:rgba(139,92,246,0.15)">🛒</div>
+      </div>
+      <div class="kpi-value" id="kpi-orders" style="color:var(--accent-violet)">3 847</div>
+      <div class="kpi-sub">
+        <span class="kpi-delta up">▲ 12.1%</span>
+        <span class="kpi-prev">vs пред. период</span>
+      </div>
+      <div class="tooltip-hint">← drill-down</div>
+    </div>
+
+    <div class="kpi-card cyan" onclick="openDrill('cr')">
+      <div class="kpi-header">
+        <div><div class="kpi-label">CR (конверсия)</div></div>
+        <div class="kpi-icon" style="background:rgba(0,212,200,0.12)">🎯</div>
+      </div>
+      <div class="kpi-value" id="kpi-cr" style="color:var(--accent-cyan)">3.84%</div>
+      <div class="kpi-sub">
+        <span class="kpi-delta down">▼ 0.3%</span>
+        <span class="kpi-prev">vs пред. период</span>
+      </div>
+      <div class="tooltip-hint">← drill-down</div>
+    </div>
+
+    <div class="kpi-card amber" onclick="openDrill('ctr')">
+      <div class="kpi-header">
+        <div><div class="kpi-label">CTR</div></div>
+        <div class="kpi-icon" style="background:rgba(245,158,11,0.15)">👆</div>
+      </div>
+      <div class="kpi-value" id="kpi-ctr" style="color:var(--accent-amber)">2.17%</div>
+      <div class="kpi-sub">
+        <span class="kpi-delta up">▲ 0.41%</span>
+        <span class="kpi-prev">vs пред. период</span>
+      </div>
+      <div class="tooltip-hint">← drill-down</div>
+    </div>
+
+    <div class="kpi-card rose" onclick="openDrill('cac')">
+      <div class="kpi-header">
+        <div><div class="kpi-label">CAC</div></div>
+        <div class="kpi-icon" style="background:rgba(244,63,94,0.12)">👤</div>
+      </div>
+      <div class="kpi-value" id="kpi-cac" style="color:var(--accent-rose)">₽1 240</div>
+      <div class="kpi-sub">
+        <span class="kpi-delta up">▲ −5.2%</span>
+        <span class="kpi-prev">снижение — хорошо</span>
+      </div>
+      <div class="tooltip-hint">← drill-down</div>
+    </div>
+
+    <div class="kpi-card blue" onclick="openDrill('cpl')">
+      <div class="kpi-header">
+        <div><div class="kpi-label">CPL</div></div>
+        <div class="kpi-icon" style="background:rgba(77,124,255,0.12)">📋</div>
+      </div>
+      <div class="kpi-value" id="kpi-cpl" style="color:var(--accent-blue)">₽312</div>
+      <div class="kpi-sub">
+        <span class="kpi-delta down">▼ 8.7%</span>
+        <span class="kpi-prev">рост стоимости лида</span>
+      </div>
+      <div class="tooltip-hint">← drill-down</div>
+    </div>
+
+    <div class="kpi-card emerald" onclick="openDrill('ltv')">
+      <div class="kpi-header">
+        <div><div class="kpi-label">LTV</div></div>
+        <div class="kpi-icon" style="background:rgba(16,185,129,0.12)">♾️</div>
+      </div>
+      <div class="kpi-value" id="kpi-ltv" style="color:var(--accent-emerald)">₽8 640</div>
+      <div class="kpi-sub">
+        <span class="kpi-delta up">▲ 22.3%</span>
+        <span class="kpi-prev">vs пред. период</span>
+      </div>
+      <div class="tooltip-hint">← drill-down</div>
+    </div>
+
+    <div class="kpi-card cyan" onclick="openDrill('roas')">
+      <div class="kpi-header">
+        <div><div class="kpi-label">ROAS</div></div>
+        <div class="kpi-icon" style="background:rgba(0,212,200,0.12)">📈</div>
+      </div>
+      <div class="kpi-value" id="kpi-roas" style="color:var(--accent-cyan)">4.2x</div>
+      <div class="kpi-sub">
+        <span class="kpi-delta up">▲ 0.6x</span>
+        <span class="kpi-prev">vs пред. период</span>
+      </div>
+      <div class="tooltip-hint">← drill-down</div>
+    </div>
+
+  </div>
+
+  <!-- SMART INSIGHTS -->
+  <div class="section-title">Smart Insights · AI-аномалии</div>
+  <div class="insights-card">
+    <div class="insights-header">
+      <div>
+        <div class="chart-title">Автоматические инсайты</div>
+        <div class="chart-subtitle">Алгоритм обнаружил 3 аномалии и 2 возможности</div>
+      </div>
+      <div class="insights-badge">🧠 AI-анализ · обновлено 5 мин назад</div>
+    </div>
+    <div class="insights-grid" id="insightsGrid">
+
+      <div class="insight-item anomaly" onclick="openDrill('tiktok-churn')">
+        <div class="insight-tag anomaly">🚨 Аномалия</div>
+        <div class="insight-text">Резкий рост Churn Rate в TikTok-канале на +34% за последние 3 дня. Возможная причина — смена аудиторного сегмента или усталость креативов.</div>
+        <div class="insight-metric">TikTok · Churn: 28% → 37.5% · Δ +9.5 п.п.</div>
+      </div>
+
+      <div class="insight-item positive" onclick="openDrill('google-roas')">
+        <div class="insight-tag positive">✅ Возможность</div>
+        <div class="insight-text">Google Performance Max показывает ROAS 6.1x — на 45% выше среднего по каналам. Рекомендуется перераспределить бюджет с Meta.</div>
+        <div class="insight-metric">Google PMax · ROAS: 6.1x · Бюджет: ₽280К/мес</div>
+      </div>
+
+      <div class="insight-item warning" onclick="openDrill('meta-cpl')">
+        <div class="insight-tag warning">⚠️ Предупреждение</div>
+        <div class="insight-text">CPL в Meta вырос на 22% за неделю. Частота показов достигла 4.8 — аудитория выгорает. Требуется ротация креативов или расширение таргета.</div>
+        <div class="insight-metric">Meta Ads · CPL: ₽254 → ₽310 · Frequency: 4.8</div>
+      </div>
+
+      <div class="insight-item positive" onclick="openDrill('retention')">
+        <div class="insight-tag positive">✅ Возможность</div>
+        <div class="insight-text">Retention Day-30 вырос до 38% у когорты, пришедшей через Яндекс.Директ. Это лучший показатель за квартал — стоит масштабировать.</div>
+        <div class="insight-metric">Яндекс · Retention D30: 38% · Когорта апр 2025</div>
+      </div>
+
+      <div class="insight-item anomaly" onclick="openDrill('cac-spike')">
+        <div class="insight-tag anomaly">🚨 Аномалия</div>
+        <div class="insight-text">CAC в сегменте «Холодная аудитория» вырос до ₽2 100 (+69%). Качество трафика снизилось — возможно изменение аукциона или конкурентная активность.</div>
+        <div class="insight-metric">Холодный таргет · CAC: ₽1 242 → ₽2 100 · Σ 5 дней</div>
+      </div>
+
+      <div class="insight-item warning" onclick="openDrill('ltv-segment')">
+        <div class="insight-tag warning">⚠️ Внимание</div>
+        <div class="insight-text">LTV сегмента «18–24» снижается 4-ю неделю подряд. Средний чек упал с ₽3 200 до ₽2 480. Рекомендуется пересмотр офферов для молодой аудитории.</div>
+        <div class="insight-metric">Сегмент 18–24 · LTV: ₽9 600 → ₽7 440 · −22.5%</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MAIN CHARTS -->
+  <div class="section-title">Динамика · Выручка и бюджет</div>
+  <div class="charts-grid" style="grid-template-columns: 1fr;">
+    <!-- COMBO CHART: Revenue & Spend -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Выручка vs Рекламные расходы</div>
+          <div class="chart-subtitle">Столбцы — деньги, линия — окупаемость рекламы (ROAS)</div>
+        </div>
+        <div class="chart-actions">
+          <button class="chip active" onclick="setComboMode('daily',this)">День</button>
+          <button class="chip" onclick="setComboMode('weekly',this)">Неделя</button>
+          <button class="chip" onclick="setComboMode('monthly',this)">Месяц</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="comboChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONVERSION TREND -->
+  <div class="section-title">Динамика конверсии · реагирует на фильтры</div>
+  <div class="conv-trend-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Как менялась конверсия по шагам воронки</div>
+        <div class="chart-subtitle">Выберите этап — и посмотрите, как он рос или падал во времени</div>
+      </div>
+      <div class="conv-tab-group" id="convTabGroup">
+        <button class="conv-tab active" onclick="setConvStage('overall',this)">Общая CR</button>
+        <button class="conv-tab" onclick="setConvStage('visit2lead',this)">Визит → Лид</button>
+        <button class="conv-tab" onclick="setConvStage('lead2cart',this)">Лид → Корзина</button>
+        <button class="conv-tab" onclick="setConvStage('cart2pay',this)">Корзина → Оплата</button>
+        <button class="conv-tab" onclick="setConvStage('pay2repeat',this)">1-я → 2-я покупка</button>
+      </div>
+    </div>
+    <div class="conv-chart-wrap">
+      <canvas id="convTrendChart"></canvas>
+    </div>
+    <div class="conv-legend" id="convLegend"></div>
+  </div>
+
+  <!-- FUNNEL + CHANNELS side by side -->
+  <div class="section-title">Воронка продаж · Эффективность каналов</div>
+  <div class="charts-grid-bottom">
+
+    <!-- FUNNEL v2 -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">🔽 Путь клиента</div>
+          <div class="chart-subtitle">Сколько людей проходит каждый шаг — и сколько отваливается</div>
+        </div>
+      </div>
+      <div class="funnel-v2" id="funnelWrap"><!-- JS --></div>
+    </div>
+
+    <!-- CHANNEL CARDS v2 -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">📡 Откуда приходят клиенты</div>
+          <div class="chart-subtitle">Сравнение рекламных каналов: отдача, стоимость, конверсия</div>
+        </div>
+      </div>
+      <div class="channel-cards" id="channelList"></div>
+    </div>
+
+  </div><!-- end charts-grid-bottom -->
+
+    <!-- RETENTION HEATMAP -->
+    <div class="chart-card" style="margin-top:16px;">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Retention Heatmap</div>
+          <div class="chart-subtitle">Удержание когорт по дням (D1 / D7 / D30)</div>
+        </div>
+      </div>
+      <div id="retentionBlock"></div>
+
+      <div style="margin-top: 18px;">
+        <div class="chart-title" style="font-size:12px; margin-bottom: 10px;">Формулы расчёта LTV</div>
+        <div class="code-block">
+<span class="cm">-- LTV = ARPU × Gross Margin × Lifetime</span>
+<span class="kw">SELECT</span>
+  user_id,
+  <span class="fn">AVG</span>(order_value) <span class="kw">AS</span> arpu,
+  <span class="num">0.68</span> <span class="kw">AS</span> gross_margin,
+  (<span class="num">1</span> / churn_rate) <span class="kw">AS</span> lifetime,
+  arpu * gross_margin * (<span class="num">1</span>/churn_rate) <span class="kw">AS</span> ltv
+<span class="kw">FROM</span> orders o
+<span class="kw">JOIN</span> users u <span class="kw">ON</span> o.user_id = u.id
+<span class="kw">GROUP BY</span> user_id
+        </div>
+        <div class="code-block">
+<span class="cm">-- Retention D1 / D7 / D30</span>
+<span class="kw">SELECT</span>
+  cohort_date,
+  <span class="fn">COUNT_IF</span>(days_since_first = <span class="num">1</span>) * <span class="num">100.0</span>
+    / <span class="fn">COUNT</span>(user_id) <span class="kw">AS</span> ret_d1,
+  <span class="fn">COUNT_IF</span>(days_since_first = <span class="num">7</span>) * <span class="num">100.0</span>
+    / <span class="fn">COUNT</span>(user_id) <span class="kw">AS</span> ret_d7,
+  <span class="fn">COUNT_IF</span>(days_since_first = <span class="num">30</span>) * <span class="num">100.0</span>
+    / <span class="fn">COUNT</span>(user_id) <span class="kw">AS</span> ret_d30
+<span class="kw">FROM</span> user_sessions
+<span class="kw">GROUP BY</span> cohort_date
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TECH: SQL + DATA QUALITY -->
+  <div class="section-title">Логика данных · SQL & Data Quality</div>
+  <div class="tech-grid">
+
+    <div class="tech-card">
+      <div class="tech-card-title">
+        <div class="tech-card-icon" style="background:rgba(77,124,255,0.15)">🗄️</div>
+        SQL-запросы для KPI-метрик
+      </div>
+      <div class="code-block">
+<span class="cm">-- ROAS = Revenue / Ad Spend</span>
+<span class="kw">SELECT</span>
+  channel,
+  <span class="fn">SUM</span>(revenue) <span class="kw">AS</span> total_revenue,
+  <span class="fn">SUM</span>(ad_spend) <span class="kw">AS</span> total_spend,
+  <span class="fn">SUM</span>(revenue) / <span class="fn">NULLIF</span>(<span class="fn">SUM</span>(ad_spend),<span class="num">0</span>)
+    <span class="kw">AS</span> roas
+<span class="kw">FROM</span> campaign_metrics
+<span class="kw">WHERE</span> date <span class="kw">BETWEEN</span> :start_date <span class="kw">AND</span> :end_date
+<span class="kw">GROUP BY</span> channel
+      </div>
+      <div class="code-block">
+<span class="cm">-- CAC = Ad Spend / New Customers</span>
+<span class="kw">SELECT</span>
+  c.channel,
+  <span class="fn">SUM</span>(c.ad_spend) /
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> u.user_id) <span class="kw">AS</span> cac
+<span class="kw">FROM</span> campaigns c
+<span class="kw">JOIN</span> users u
+  <span class="kw">ON</span> c.channel = u.acquisition_channel
+  <span class="kw">AND</span> u.is_new_customer = <span class="num">1</span>
+<span class="kw">GROUP BY</span> c.channel
+      </div>
+      <div class="code-block">
+<span class="cm">-- CPL = Spend / Leads</span>
+<span class="kw">SELECT</span>
+  channel,
+  campaign_id,
+  <span class="fn">SUM</span>(spend) / <span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(lead_id),<span class="num">0</span>)
+    <span class="kw">AS</span> cpl
+<span class="kw">FROM</span> ad_leads
+<span class="kw">GROUP BY</span> <span class="num">1</span>,<span class="num">2</span>
+<span class="kw">ORDER BY</span> cpl <span class="kw">ASC</span>
+      </div>
+      <div class="code-block">
+<span class="cm">-- CTR = Clicks / Impressions</span>
+<span class="kw">SELECT</span>
+  channel,
+  <span class="fn">SUM</span>(clicks)*<span class="num">100.0</span> /
+    <span class="fn">NULLIF</span>(<span class="fn">SUM</span>(impressions),<span class="num">0</span>) <span class="kw">AS</span> ctr_pct
+<span class="kw">FROM</span> ad_stats
+<span class="kw">WHERE</span> date >= <span class="fn">CURRENT_DATE</span> - <span class="kw">INTERVAL</span> <span class="str">'30 days'</span>
+<span class="kw">GROUP BY</span> channel
+      </div>
+    </div>
+
+    <div class="tech-card">
+      <div class="tech-card-title">
+        <div class="tech-card-icon" style="background:rgba(16,185,129,0.15)">🛡️</div>
+        Data Quality Checks (Backend)
+      </div>
+      <ul class="dq-list">
+        <li class="dq-item">
+          <div class="dq-status ok">✓</div>
+          <div>
+            <div class="dq-text">Полнота данных по каналам</div>
+            <div class="dq-detail">CHECK: COUNT(*) per channel > 0 AND last_sync_at < NOW() - INTERVAL '2h'</div>
+          </div>
+        </li>
+        <li class="dq-item">
+          <div class="dq-status ok">✓</div>
+          <div>
+            <div class="dq-text">Отсутствие дублей кампаний</div>
+            <div class="dq-detail">UNIQUE CONSTRAINT: (campaign_id, date, channel) · Дедупликация через ROW_NUMBER()</div>
+          </div>
+        </li>
+        <li class="dq-item">
+          <div class="dq-status warn">!</div>
+          <div>
+            <div class="dq-text">Аномальные значения spend</div>
+            <div class="dq-detail">ALERT: spend > AVG(spend) * 3 за последние 7 дней → уведомление в Slack</div>
+          </div>
+        </li>
+        <li class="dq-item">
+          <div class="dq-status ok">✓</div>
+          <div>
+            <div class="dq-text">Соответствие валют</div>
+            <div class="dq-detail">Конвертация USD→RUB через актуальный курс ЦБ РФ на дату транзакции</div>
+          </div>
+        </li>
+        <li class="dq-item">
+          <div class="dq-status warn">!</div>
+          <div>
+            <div class="dq-text">Задержка TikTok API</div>
+            <div class="dq-detail">Данные TikTok приходят с задержкой 2–4ч. Last sync: 14:30 · Gap: ~2.5ч</div>
+          </div>
+        </li>
+        <li class="dq-item">
+          <div class="dq-status ok">✓</div>
+          <div>
+            <div class="dq-text">NULL-проверка ключевых полей</div>
+            <div class="dq-detail">campaign_id, channel, date, impressions NOT NULL · Reject rate: 0.02%</div>
+          </div>
+        </li>
+        <li class="dq-item">
+          <div class="dq-status err">✗</div>
+          <div>
+            <div class="dq-text">Расхождение Meta vs внутренних данных</div>
+            <div class="dq-detail">Δ Revenue > 5% между Meta CAPI и CRM · Требует reconciliation · Тикет #4821</div>
+          </div>
+        </li>
+        <li class="dq-item">
+          <div class="dq-status ok">✓</div>
+          <div>
+            <div class="dq-text">Attribution window consistency</div>
+            <div class="dq-detail">Единое окно атрибуции 7d-click / 1d-view для всех каналов через UTM-маппинг</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- ═══════════════════ DRILL DOWN MODAL ═══════════════════ -->
+<div class="modal-overlay" id="drillModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Детализация</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modalBody"></div>
+    <div class="modal-chart-wrap">
+      <canvas id="modalChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// DATA MODEL
+// ══════════════════════════════════════
+const DATA = {
+  '7d':  { revenue: '₽3.2М', orders: '892',  cr: '3.21%', ctr: '1.98%', cac: '₽1 420', cpl: '₽368', ltv: '₽8 100', roas: '3.8x' },
+  '30d': { revenue: '₽14.2М',orders: '3 847',cr: '3.84%', ctr: '2.17%', cac: '₽1 240', cpl: '₽312', ltv: '₽8 640', roas: '4.2x' },
+  '90d': { revenue: '₽38.5М',orders: '10 244',cr:'4.12%',ctr: '2.34%', cac: '₽1 140', cpl: '₽288', ltv: '₽9 200', roas: '4.7x' },
+  'ytd': { revenue: '₽51.1М',orders: '14 018',cr:'4.32%',ctr: '2.51%', cac: '₽1 090', cpl: '₽274', ltv: '₽9 800', roas: '5.1x' }
+};
+
+let comboChart, modalChartRef;
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+  renderFunnel();
+  renderChannels('all');
+  renderRetention();
+  initComboChart();
+  renderConvTrend();
+});
+
+// ══════════════════════════════════════
+// FILTERS
+// ══════════════════════════════════════
+function applyFilters() {
+  const period  = document.getElementById('filterPeriod').value;
+  const channel = document.getElementById('filterChannel').value;
+  const d = DATA[period];
+
+  // Animate KPI values
+  const map = { revenue: d.revenue, orders: d.orders, cr: d.cr, ctr: d.ctr, cac: d.cac, cpl: d.cpl, ltv: d.ltv, roas: d.roas };
+  Object.entries(map).forEach(([k,v]) => {
+    const el = document.getElementById(`kpi-${k}`);
+    if (el) { el.style.opacity = '0'; el.style.transform = 'translateY(6px)'; setTimeout(() => { el.style.transition = 'opacity 0.3s, transform 0.3s'; el.style.opacity = '1'; el.style.transform = 'translateY(0)'; el.textContent = v; }, 150); }
+  });
+
+  renderChannels(channel);
+  renderFunnel();
+  renderConvTrend();
+  updateComboChart(period);
+  updateInsights(channel, period);
+}
+
+// ══════════════════════════════════════
+// COMBO CHART
+// ══════════════════════════════════════
+function generateComboData(period) {
+  const labels = {
+    '7d':  ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],
+    '30d': Array.from({length:30}, (_,i) => `${i+1}`),
+    '90d': ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен'],
+    'ytd': ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек']
+  };
+  const n = labels[period].length;
+  const revenue = Array.from({length:n}, () => Math.round(300000 + Math.random()*800000));
+  const spend   = revenue.map(r => Math.round(r * (0.18 + Math.random()*0.12)));
+  return { labels: labels[period], revenue, spend };
+}
+
+function initComboChart() {
+  const d = generateComboData('30d');
+  const ctx = document.getElementById('comboChart').getContext('2d');
+  comboChart = new Chart(ctx, {
+    data: {
+      labels: d.labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Выручка',
+          data: d.revenue,
+          backgroundColor: 'rgba(77,124,255,0.25)',
+          borderColor: 'rgba(77,124,255,0.7)',
+          borderWidth: 1,
+          borderRadius: 4,
+          yAxisID: 'y'
+        },
+        {
+          type: 'bar',
+          label: 'Расходы',
+          data: d.spend,
+          backgroundColor: 'rgba(244,63,94,0.2)',
+          borderColor: 'rgba(244,63,94,0.5)',
+          borderWidth: 1,
+          borderRadius: 4,
+          yAxisID: 'y'
+        },
+        {
+          type: 'line',
+          label: 'ROAS',
+          data: d.revenue.map((r,i) => (r/d.spend[i]).toFixed(2)),
+          borderColor: '#00d4c8',
+          borderWidth: 2,
+          pointBackgroundColor: '#00d4c8',
+          pointRadius: 2,
+          tension: 0.4,
+          yAxisID: 'y2',
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#7a90c4', font: { family: 'JetBrains Mono', size: 10 }, boxWidth: 12 } },
+        tooltip: {
+          backgroundColor: '#0d1526',
+          borderColor: 'rgba(99,140,255,0.28)',
+          borderWidth: 1,
+          titleColor: '#e8eeff',
+          bodyColor: '#7a90c4',
+          padding: 10,
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.dataset.type==='line' ? ctx.raw+'x' : '₽'+Number(ctx.raw).toLocaleString('ru')}` }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(99,140,255,0.06)' }, ticks: { color: '#3d5080', font: { family: 'JetBrains Mono', size: 9 } } },
+        y: { grid: { color: 'rgba(99,140,255,0.06)' }, ticks: { color: '#3d5080', font: { family: 'JetBrains Mono', size: 9 }, callback: v => '₽'+Math.round(v/1000)+'К' } },
+        y2: { position: 'right', grid: { display: false }, ticks: { color: '#00d4c8', font: { family: 'JetBrains Mono', size: 9 }, callback: v => v+'x' } }
+      }
+    }
+  });
+}
+
+function updateComboChart(period) {
+  const d = generateComboData(period);
+  comboChart.data.labels = d.labels;
+  comboChart.data.datasets[0].data = d.revenue;
+  comboChart.data.datasets[1].data = d.spend;
+  comboChart.data.datasets[2].data = d.revenue.map((r,i) => (r/d.spend[i]).toFixed(2));
+  comboChart.update('active');
+}
+
+let comboChipActive = null;
+function setComboMode(mode, el) {
+  document.querySelectorAll('.chart-actions .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const pMap = { daily: '30d', weekly: '90d', monthly: 'ytd' };
+  updateComboChart(pMap[mode] || '30d');
+}
+
+// ══════════════════════════════════════
+// FUNNEL v2
+// ══════════════════════════════════════
+const FUNNEL_STEPS = [
+  { label: 'Зашли на сайт',  emoji: '👀', desc: 'Все посетители за период', count: 100000, color: '#4d7cff' },
+  { label: 'Заинтересовались', emoji: '💡', desc: 'Оставили заявку или контакт', count: 8400, color: '#8b5cf6' },
+  { label: 'Положили в корзину', emoji: '🛒', desc: 'Выбрали товар и добавили', count: 4200, color: '#00d4c8' },
+  { label: 'Начали оформлять', emoji: '📝', desc: 'Перешли к оформлению заказа', count: 2100, color: '#10b981' },
+  { label: 'Заплатили',      emoji: '💳', desc: 'Успешная оплата заказа', count: 1680, color: '#f59e0b' },
+  { label: 'Купили снова',   emoji: '🔁', desc: 'Вернулись за повторной покупкой', count: 630, color: '#f43f5e' }
+];
+
+// Scale factor per period for funnel
+const FUNNEL_SCALE = { '7d': 0.22, '30d': 1, '90d': 2.9, 'ytd': 3.8 };
+// Multiplier per channel
+const FUNNEL_CH_MOD = { all: 1, google: 0.38, meta: 0.26, tiktok: 0.18, yandex: 0.22 };
+
+function renderFunnel() {
+  const period  = document.getElementById('filterPeriod').value;
+  const channel = document.getElementById('filterChannel').value;
+  const scale   = (FUNNEL_SCALE[period] || 1) * (FUNNEL_CH_MOD[channel] || 1);
+
+  const steps = FUNNEL_STEPS.map(s => ({ ...s, count: Math.round(s.count * scale) }));
+  const max = steps[0].count;
+
+  const wrap = document.getElementById('funnelWrap');
+  let html = '<div class="funnel-visual">';
+
+  steps.forEach((s, i) => {
+    const pct = (s.count / max * 100).toFixed(0);
+    const crFromPrev = i === 0 ? null : (s.count / steps[i-1].count * 100).toFixed(1);
+
+    html += `
+      <div class="fv-step" onclick="openDrill('funnel-${i}')" title="Нажмите для детализации">
+        <div class="fv-bg">
+          <div class="fv-fill" style="width:0%;background:${s.color}" data-w="${pct}%"></div>
+          <div class="fv-content">
+            <div class="fv-emoji">${s.emoji}</div>
+            <div class="fv-info">
+              <div class="fv-name">${s.label}</div>
+              <div class="fv-desc">${s.desc}</div>
+            </div>
+            <div class="fv-numbers">
+              <div class="fv-count">${s.count.toLocaleString('ru')}</div>
+              <div class="fv-pct">${pct}% от начала</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    if (i < steps.length - 1) {
+      const lost = steps[i].count - steps[i+1].count;
+      const lostPct = (lost / steps[i].count * 100).toFixed(0);
+      html += `
+        <div class="fv-arrow">
+          <div class="fv-arrow-line"></div>
+          <div class="fv-arrow-badge" style="color:${crFromPrev ? (parseFloat(crFromPrev) > 50 ? 'var(--accent-emerald)' : parseFloat(crFromPrev) > 25 ? 'var(--accent-amber)' : 'var(--accent-rose)') : 'var(--text-secondary)'}">
+            ↓ переходит ${crFromPrev !== null ? (steps[i+1].count/steps[i].count*100).toFixed(0)+'%' : ''}
+            &nbsp;&nbsp;↑ уходит ${lostPct}% (${lost.toLocaleString('ru')} чел)
+          </div>
+          <div class="fv-arrow-line"></div>
+        </div>`;
+    }
+  });
+
+  html += '</div>';
+
+  // Summary row
+  const overallCR = (steps[steps.length-1].count / steps[0].count * 100).toFixed(2);
+  const payingCR  = (steps[4].count / steps[0].count * 100).toFixed(2);
+  const repeatCR  = (steps[5].count / steps[4].count * 100).toFixed(1);
+  html += `
+    <div class="fv-summary">
+      <div class="fv-sum-cell">
+        <div class="fv-sum-label">Общая конверсия</div>
+        <div class="fv-sum-val" style="color:var(--accent-cyan)">${payingCR}%</div>
+      </div>
+      <div class="fv-sum-cell">
+        <div class="fv-sum-label">До оплаты</div>
+        <div class="fv-sum-val" style="color:var(--accent-emerald)">${steps[4].count.toLocaleString('ru')}</div>
+      </div>
+      <div class="fv-sum-cell">
+        <div class="fv-sum-label">Повторные</div>
+        <div class="fv-sum-val" style="color:var(--accent-amber)">${repeatCR}%</div>
+      </div>
+    </div>`;
+
+  wrap.innerHTML = html;
+
+  setTimeout(() => {
+    wrap.querySelectorAll('.fv-fill').forEach(el => {
+      el.style.transition = 'width 1s cubic-bezier(0.16,1,0.3,1)';
+      el.style.width = el.dataset.w;
+    });
+  }, 60);
+}
+
+// ══════════════════════════════════════
+// CHANNELS v2
+// ══════════════════════════════════════
+const CHANNEL_CONFIGS = {
+  all: [
+    { n:'Google', icon:'G', bg:'#4285F4', tagline:'Поиск + Performance Max',    roas:6.1, cac:980,  cpl:245, spend:1800000, cr:4.8 },
+    { n:'Яндекс', icon:'Я', bg:'#FF2A00', tagline:'Директ + РСЯ',               roas:4.4, cac:1100, cpl:295, spend:1200000, cr:3.9 },
+    { n:'Meta',   icon:'f', bg:'#0082FB', tagline:'Facebook + Instagram',        roas:3.2, cac:1480, cpl:380, spend:950000,  cr:2.8 },
+    { n:'TikTok', icon:'♪', bg:'#69C9D0', tagline:'In-Feed + TopView',           roas:2.8, cac:1620, cpl:420, spend:650000,  cr:2.1 }
+  ],
+  google: [
+    { n:'Поиск',   icon:'🔍', bg:'#4285F4', tagline:'Брендовые + общие запросы', roas:7.2, cac:840,  cpl:210, spend:900000, cr:5.6 },
+    { n:'PMax',    icon:'⚡',  bg:'#34A853', tagline:'Performance Max кампании',  roas:6.1, cac:980,  cpl:245, spend:600000, cr:4.1 },
+    { n:'Display', icon:'🖼',  bg:'#FBBC04', tagline:'Баннерная сеть Google',     roas:2.8, cac:1680, cpl:440, spend:300000, cr:1.8 }
+  ],
+  meta: [
+    { n:'Feed',    icon:'📰', bg:'#0082FB', tagline:'Лента Facebook и Instagram', roas:3.8, cac:1280, cpl:320, spend:540000, cr:3.2 },
+    { n:'Reels',   icon:'🎬', bg:'#E1306C', tagline:'Видеоreels Instagram',        roas:2.9, cac:1580, cpl:415, spend:280000, cr:2.4 },
+    { n:'Сообщ.',  icon:'💬', bg:'#00B2FF', tagline:'Messenger-реклама',          roas:2.1, cac:1820, cpl:480, spend:130000, cr:1.6 }
+  ],
+  tiktok: [
+    { n:'In-Feed', icon:'📱', bg:'#69C9D0', tagline:'В ленте TikTok',             roas:3.1, cac:1520, cpl:400, spend:380000, cr:2.3 },
+    { n:'TopView', icon:'👁', bg:'#EE1D52', tagline:'При открытии приложения',    roas:2.2, cac:1900, cpl:490, spend:270000, cr:1.7 }
+  ],
+  yandex: [
+    { n:'Поиск',  icon:'🔴', bg:'#FF2A00', tagline:'Яндекс.Директ поисковый',    roas:5.2, cac:1020, cpl:268, spend:720000, cr:4.6 },
+    { n:'РСЯ',   icon:'📡', bg:'#FFD700', tagline:'Рекламная сеть Яндекса',      roas:3.4, cac:1380, cpl:348, spend:480000, cr:2.8 }
+  ]
+};
+
+function renderChannels(channelFilter) {
+  const data = CHANNEL_CONFIGS[channelFilter] || CHANNEL_CONFIGS.all;
+  const maxRoas = Math.max(...data.map(d => d.roas));
+  const maxSpend = Math.max(...data.map(d => d.spend));
+
+  const roasColors = (v, max) => v / max > 0.75 ? 'var(--accent-emerald)' : v / max > 0.45 ? 'var(--accent-amber)' : 'var(--accent-rose)';
+
+  const list = document.getElementById('channelList');
+  list.innerHTML = data.map(d => {
+    const roasColor = roasColors(d.roas, maxRoas);
+    const spendPct = (d.spend / maxSpend * 100).toFixed(0);
+    const roasPct  = (d.roas / maxRoas * 100).toFixed(0);
+    const crPct    = (d.cr / 6 * 100).toFixed(0);
+    const spendLabel = d.spend >= 1000000
+      ? (d.spend/1000000).toFixed(1) + 'М'
+      : Math.round(d.spend/1000) + 'К';
+
+    const roasLabel = d.roas >= 4 ? '🔥 Топ' : d.roas >= 3 ? '✅ Норм' : '⚠️ Слабо';
+
+    return `
+      <div class="ch-card" onclick="openDrill('channel-${d.n}')" style="--ch-color:${d.bg}">
+        <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${d.bg};border-radius:12px 0 0 12px"></div>
+        <div class="ch-top">
+          <div class="ch-logo" style="background:${d.bg}22;color:${d.bg}">${d.icon}</div>
+          <div class="ch-name-block">
+            <div class="ch-name" style="color:${d.bg}">${d.n}</div>
+            <div class="ch-tagline">${d.tagline}</div>
+          </div>
+          <div class="ch-badge" style="background:${d.roas>=4?'rgba(16,185,129,0.15)':d.roas>=3?'rgba(245,158,11,0.15)':'rgba(244,63,94,0.15)'};color:${roasColor}">
+            ${roasLabel}
+          </div>
+        </div>
+        <div class="ch-metrics">
+          <div class="ch-met">
+            <div class="ch-met-label">💰 ROAS</div>
+            <div class="ch-met-val" style="color:${roasColor}">${d.roas.toFixed(1)}x</div>
+            <div class="ch-meter-bg"><div class="ch-meter-fill" style="width:0%;background:${roasColor}" data-w="${roasPct}%"></div></div>
+          </div>
+          <div class="ch-met">
+            <div class="ch-met-label">👤 CAC</div>
+            <div class="ch-met-val">₽${d.cac.toLocaleString('ru')}</div>
+            <div class="ch-meter-bg"><div class="ch-meter-fill" style="width:0%;background:var(--accent-blue)" data-w="${(d.cac/1900*100).toFixed(0)}%"></div></div>
+          </div>
+          <div class="ch-met">
+            <div class="ch-met-label">🎯 CR</div>
+            <div class="ch-met-val" style="color:var(--accent-cyan)">${d.cr}%</div>
+            <div class="ch-meter-bg"><div class="ch-meter-fill" style="width:0%;background:var(--accent-cyan)" data-w="${crPct}%"></div></div>
+          </div>
+          <div class="ch-met">
+            <div class="ch-met-label">📦 Бюджет</div>
+            <div class="ch-met-val">₽${spendLabel}</div>
+            <div class="ch-meter-bg"><div class="ch-meter-fill" style="width:0%;background:var(--accent-violet)" data-w="${spendPct}%"></div></div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  setTimeout(() => {
+    list.querySelectorAll('.ch-meter-fill').forEach(el => {
+      el.style.transition = 'width 0.85s cubic-bezier(0.16,1,0.3,1)';
+      el.style.width = el.dataset.w;
+    });
+  }, 60);
+}
+
+// keep old API compat
+function setChannelMetric() {}
+
+// ══════════════════════════════════════
+// CONVERSION TREND CHART
+// ══════════════════════════════════════
+let convChart = null;
+let currentConvStage = 'overall';
+
+const CONV_STAGE_META = {
+  overall:    { label: 'Общая конверсия (посетитель → оплата)', color: '#4d7cff', base: 1.68 },
+  visit2lead: { label: 'Визит → Заявка',                        color: '#8b5cf6', base: 8.4  },
+  lead2cart:  { label: 'Заявка → Корзина',                      color: '#00d4c8', base: 50.0 },
+  cart2pay:   { label: 'Корзина → Оплата',                      color: '#10b981', base: 80.0 },
+  pay2repeat: { label: '1-я покупка → Повторная',               color: '#f59e0b', base: 37.5 }
+};
+
+// Multipliers for period
+const CONV_PERIOD_BASE = { '7d': 0.9, '30d': 1.0, '90d': 1.08, 'ytd': 1.12 };
+// Channel modifiers
+const CONV_CH_BASE = { all: 1, google: 1.25, meta: 0.73, tiktok: 0.55, yandex: 1.01 };
+// Target modifiers
+const CONV_TGT_BASE = { all: 1, cold: 0.6, warm: 1.15, retarget: 1.55, lal: 1.1 };
+
+function getConvSeed(stage, period, channel, target) {
+  const base = CONV_STAGE_META[stage].base;
+  const pm   = CONV_PERIOD_BASE[period] || 1;
+  const cm   = CONV_CH_BASE[channel] || 1;
+  const tm   = CONV_TGT_BASE[target] || 1;
+  return base * pm * cm * tm;
+}
+
+function genConvSeries(seed, n) {
+  // generate a realistic trending series around seed with ±15% noise
+  const trend = (Math.random() - 0.4) * 0.008;
+  const result = [];
+  let cur = seed * (0.88 + Math.random() * 0.14);
+  for (let i = 0; i < n; i++) {
+    cur = cur * (1 + trend) + (Math.random() - 0.5) * seed * 0.06;
+    cur = Math.max(cur, seed * 0.3);
+    result.push(parseFloat(cur.toFixed(2)));
+  }
+  return result;
+}
+
+function getConvLabels(period) {
+  const maps = {
+    '7d':  ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],
+    '30d': Array.from({length:30}, (_,i)=>`${i+1}/${new Date().getMonth()+1}`),
+    '90d': ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен'],
+    'ytd': ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек']
+  };
+  return maps[period] || maps['30d'];
+}
+
+function renderConvTrend() {
+  const period  = document.getElementById('filterPeriod').value;
+  const channel = document.getElementById('filterChannel').value;
+  const target  = document.getElementById('filterTarget').value;
+  const meta    = CONV_STAGE_META[currentConvStage];
+  const labels  = getConvLabels(period);
+  const seed    = getConvSeed(currentConvStage, period, channel, target);
+  const vals    = genConvSeries(seed, labels.length);
+
+  // Second comparison line: previous period (slightly lower)
+  const prevVals = vals.map(v => parseFloat((v * (0.85 + Math.random()*0.1)).toFixed(2)));
+
+  const channelNames = { all:'Все каналы', google:'Google', meta:'Meta', tiktok:'TikTok', yandex:'Яндекс' };
+  const targetNames  = { all:'Все аудитории', cold:'Холодная', warm:'Тёплая', retarget:'Ретаргет', lal:'Look-alike' };
+
+  if (convChart) convChart.destroy();
+  const ctx = document.getElementById('convTrendChart').getContext('2d');
+
+  const avg = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2);
+  const avgLine = Array(labels.length).fill(parseFloat(avg));
+
+  convChart = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'line',
+          label: `Текущий период · ${channelNames[channel]} · ${targetNames[target]}`,
+          data: vals,
+          borderColor: meta.color,
+          backgroundColor: meta.color + '18',
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.4,
+          pointRadius: labels.length <= 12 ? 4 : 2,
+          pointBackgroundColor: meta.color,
+          pointBorderColor: 'var(--bg-base)',
+          pointBorderWidth: 2,
+          order: 1
+        },
+        {
+          type: 'line',
+          label: 'Предыдущий период',
+          data: prevVals,
+          borderColor: 'rgba(120,140,200,0.45)',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderDash: [4, 4],
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          order: 2
+        },
+        {
+          type: 'line',
+          label: `Среднее: ${avg}%`,
+          data: avgLine,
+          borderColor: 'rgba(245,158,11,0.5)',
+          backgroundColor: 'transparent',
+          borderWidth: 1,
+          borderDash: [2, 6],
+          fill: false,
+          pointRadius: 0,
+          order: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0d1526',
+          borderColor: 'rgba(99,140,255,0.3)',
+          borderWidth: 1,
+          titleColor: '#e8eeff',
+          bodyColor: '#7a90c4',
+          padding: 12,
+          callbacks: {
+            label: ctx => {
+              const suffixes = ['%','%','%'];
+              return ` ${ctx.dataset.label}: ${ctx.raw}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(99,140,255,0.05)' },
+          ticks: { color: '#3d5080', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 12 }
+        },
+        y: {
+          grid: { color: 'rgba(99,140,255,0.06)' },
+          ticks: {
+            color: '#3d5080',
+            font: { family: 'JetBrains Mono', size: 9 },
+            callback: v => v + '%'
+          }
+        }
+      }
+    }
+  });
+
+  // Custom legend
+  document.getElementById('convLegend').innerHTML = `
+    <div class="conv-leg-item"><div class="conv-leg-dot" style="background:${meta.color}"></div>${meta.label}</div>
+    <div class="conv-leg-item"><div class="conv-leg-dot" style="background:rgba(120,140,200,0.5)"></div>Предыдущий период</div>
+    <div class="conv-leg-item"><div class="conv-leg-dot" style="background:rgba(245,158,11,0.7)"></div>Среднее: ${avg}%</div>
+  `;
+}
+
+function setConvStage(stage, el) {
+  currentConvStage = stage;
+  document.querySelectorAll('#convTabGroup .conv-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderConvTrend();
+}
+
+// ══════════════════════════════════════
+// RETENTION HEATMAP
+// ══════════════════════════════════════
+function renderRetention() {
+  const cohorts = ['Янв','Фев','Мар','Апр','Май','Июн'];
+  const days = ['D1','D3','D7','D14','D21','D30','D60'];
+  const base = [
+    [62,48,38,32,27,22,14],
+    [65,50,40,33,28,24,16],
+    [60,46,36,30,25,20,13],
+    [68,54,42,36,30,26,18],
+    [71,58,46,39,33,29,20],
+    [66,52,41,35,29,25,17]
+  ];
+
+  const colors = (v) => {
+    if (v >= 60) return { bg: 'rgba(16,185,129,0.7)', txt: '#fff' };
+    if (v >= 40) return { bg: 'rgba(16,185,129,0.4)', txt: '#e8eeff' };
+    if (v >= 25) return { bg: 'rgba(245,158,11,0.4)', txt: '#e8eeff' };
+    if (v >= 15) return { bg: 'rgba(244,63,94,0.3)', txt: '#e8eeff' };
+    return { bg: 'rgba(244,63,94,0.15)', txt: '#7a90c4' };
+  };
+
+  let html = `<div style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:6px;">Когорта / День</div>`;
+  html += `<div style="display:grid;grid-template-columns:40px repeat(7,1fr);gap:3px;align-items:center;">`;
+  html += `<div></div>` + days.map(d => `<div class="ret-label">${d}</div>`).join('');
+  cohorts.forEach((c, ci) => {
+    html += `<div style="font-size:10px;font-family:var(--font-mono);color:var(--text-secondary)">${c}</div>`;
+    base[ci].forEach(v => {
+      const { bg, txt } = colors(v);
+      html += `<div class="ret-cell" style="background:${bg};color:${txt};font-size:9px" title="${v}%">${v}%</div>`;
+    });
+  });
+  html += `</div>`;
+  document.getElementById('retentionBlock').innerHTML = html;
+}
+
+// ══════════════════════════════════════
+// SMART INSIGHTS UPDATE
+// ══════════════════════════════════════
+function updateInsights(channel, period) {
+  // In a real implementation, this would re-fetch from backend
+  // Here we subtly change the insight metrics based on filters
+  const el = document.querySelector('#insightsGrid .insight-item.anomaly .insight-metric');
+  if (el && channel !== 'all') {
+    el.textContent = `${channel.charAt(0).toUpperCase()+channel.slice(1)} · Churn: обновляется...`;
+    setTimeout(() => { el.textContent = `${channel} · Churn: рассчитывается для выбранного канала`; }, 600);
+  }
+}
+
+// ══════════════════════════════════════
+// DRILL DOWN
+// ══════════════════════════════════════
+const DRILL_DATA = {
+  revenue: { title: '💰 Детализация выручки', stats: [
+    { label: 'Avg. чек', val: '₽3 690' }, { label: 'Новые клиенты', val: '72%' },
+    { label: 'Повторные', val: '28%' }, { label: 'Возврат', val: '2.1%' }
+  ], chartLabel: 'Выручка по дням', color: '#4d7cff' },
+  orders: { title: '🛒 Детализация заказов', stats: [
+    { label: 'Завершённые', val: '3 592' }, { label: 'Отменённые', val: '255' },
+    { label: 'В обработке', val: '142' }, { label: 'Возвраты', val: '89' }
+  ], chartLabel: 'Заказы по дням', color: '#8b5cf6' },
+  cr: { title: '🎯 Конверсия по каналам', stats: [
+    { label: 'Google', val: '4.8%' }, { label: 'Яндекс', val: '3.9%' },
+    { label: 'Meta', val: '2.8%' }, { label: 'TikTok', val: '2.1%' }
+  ], chartLabel: 'CR по дням', color: '#00d4c8' },
+  roas: { title: '📈 ROAS Drill-down', stats: [
+    { label: 'Лучший канал', val: 'Google 6.1x' }, { label: 'Худший', val: 'TikTok 2.8x' },
+    { label: 'Целевой ROAS', val: '4.0x' }, { label: 'Статус', val: '✅ Выполнен' }
+  ], chartLabel: 'ROAS по дням', color: '#00d4c8' },
+  ltv: { title: '♾️ LTV анализ', stats: [
+    { label: 'Avg LTV', val: '₽8 640' }, { label: 'LTV/CAC ratio', val: '6.97x' },
+    { label: 'Payback period', val: '18 дней' }, { label: 'Churn rate', val: '4.2%/мес' }
+  ], chartLabel: 'LTV тренд', color: '#10b981' },
+  cac: { title: '👤 CAC детализация', stats: [
+    { label: 'Google CAC', val: '₽980' }, { label: 'Яндекс CAC', val: '₽1 100' },
+    { label: 'Meta CAC', val: '₽1 480' }, { label: 'TikTok CAC', val: '₽1 620' }
+  ], chartLabel: 'CAC тренд', color: '#f43f5e' }
+};
+
+function openDrill(key) {
+  const meta = DRILL_DATA[key];
+  if (!meta) { openGenericDrill(key); return; }
+  document.getElementById('modalTitle').textContent = meta.title;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="modal-drill-grid">
+      ${meta.stats.map(s => `<div class="drill-stat"><div class="drill-stat-label">${s.label}</div><div class="drill-stat-val" style="color:${meta.color}">${s.val}</div></div>`).join('')}
+    </div>
+  `;
+  document.getElementById('drillModal').classList.add('active');
+
+  if (modalChartRef) { modalChartRef.destroy(); }
+  const ctx = document.getElementById('modalChart').getContext('2d');
+  const n = 14;
+  const vals = Array.from({length:n}, () => Math.round(100 + Math.random()*300));
+  modalChartRef = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: Array.from({length:n}, (_,i) => `Д${i+1}`),
+      datasets: [{ label: meta.chartLabel, data: vals, borderColor: meta.color, backgroundColor: meta.color+'22', borderWidth: 2, fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: meta.color }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#7a90c4', font: { family: 'JetBrains Mono', size: 10 } } } },
+      scales: {
+        x: { grid: { color: 'rgba(99,140,255,0.06)' }, ticks: { color: '#3d5080', font: { family: 'JetBrains Mono', size: 9 } } },
+        y: { grid: { color: 'rgba(99,140,255,0.06)' }, ticks: { color: '#3d5080', font: { family: 'JetBrains Mono', size: 9 } } }
+      }
+    }
+  });
+}
+
+function openGenericDrill(key) {
+  const titles = {
+    'tiktok-churn': '🚨 TikTok Churn аномалия',
+    'google-roas':  '✅ Google ROAS возможность',
+    'meta-cpl':     '⚠️ Meta CPL предупреждение',
+    'retention':    '📊 Retention детализация',
+    'cac-spike':    '🚨 CAC spike анализ',
+    'ltv-segment':  '⚠️ LTV сегмент 18–24'
+  };
+  document.getElementById('modalTitle').textContent = titles[key] || '📊 Детализация: ' + key;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="modal-drill-grid">
+      <div class="drill-stat"><div class="drill-stat-label">Статус</div><div class="drill-stat-val" style="color:var(--accent-rose)">Мониторинг</div></div>
+      <div class="drill-stat"><div class="drill-stat-label">Действие</div><div class="drill-stat-val" style="color:var(--accent-amber)">Требуется</div></div>
+      <div class="drill-stat"><div class="drill-stat-label">Приоритет</div><div class="drill-stat-val" style="color:var(--accent-violet)">Высокий</div></div>
+      <div class="drill-stat"><div class="drill-stat-label">Ответственный</div><div class="drill-stat-val" style="font-size:14px">Lead Marketer</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;margin-bottom:8px">
+      Данный инсайт требует немедленного рассмотрения. Алгоритм обнаружил статистически значимое отклонение (Z-score > 2.5σ) от нормального поведения метрики за последние 72 часа. Рекомендуется провести A/B тест и скорректировать бюджетное распределение.
+    </div>
+  `;
+  document.getElementById('drillModal').classList.add('active');
+  if (modalChartRef) { modalChartRef.destroy(); }
+  const ctx = document.getElementById('modalChart').getContext('2d');
+  const n = 14;
+  const base = Array.from({length:10}, () => 100 + Math.random()*40);
+  const spike = Array.from({length:4}, () => 150 + Math.random()*80);
+  const vals = [...base, ...spike];
+  modalChartRef = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: Array.from({length:n}, (_,i) => `Д${i+1}`),
+      datasets: [{ label: 'Метрика', data: vals, borderColor: '#f43f5e', backgroundColor: 'rgba(244,63,94,0.1)', borderWidth: 2, fill: true, tension: 0.3, pointRadius: vals.map((v,i) => i >= 10 ? 5 : 2), pointBackgroundColor: vals.map((_,i) => i >= 10 ? '#f43f5e' : '#7a90c4') }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#7a90c4', font: { family: 'JetBrains Mono', size: 10 } } } },
+      scales: {
+        x: { grid: { color: 'rgba(99,140,255,0.06)' }, ticks: { color: '#3d5080', font: { size: 9 } } },
+        y: { grid: { color: 'rgba(99,140,255,0.06)' }, ticks: { color: '#3d5080', font: { size: 9 } } }
+      }
+    }
+  });
+}
+
+function closeModal() {
+  document.getElementById('drillModal').classList.remove('active');
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
