@@ -2,7 +2,7 @@
    NBA PIPELINE LONG-FORM SCROLL-READ STYLES
 =================================================== */
 body.pipe {
-  --ac: #FF8A1F;       /* Фирменный оранжевый акцент */
+  --ac: #FF8A1F;     
   --blue: #4DA3FF;
   --green: #3DDC97;
   --code: #0A0D12;
@@ -258,7 +258,7 @@ pre.code {
 
 @media (max-width: 800px) {
   .flow-nav {
-    display: none; /* На мобилках просто листаем естественным скроллом */
+    display: none; 
   }
   .stage-section {
     padding: 24px 18px;

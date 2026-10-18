@@ -93,8 +93,10 @@ section.w{margin-bottom:20px}
   min-width:0;margin:0;
   background:var(--sf);padding:20px;border-radius:16px;border:1px solid var(--bd);
 }
-/* Боковые колонки не растягивают строку: высоту задаёт карта, лишнее прокручивается внутри */
+
 .board > .side{contain:size;overflow-y:auto;scrollbar-width:thin;min-height:560px}
+
+
 
 /* --- ЦЕНТР: Карта бросков --- */
 .map-top {
@@ -124,11 +126,13 @@ section.w{margin-bottom:20px}
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin: 0; /* Убираем старый отступ в 14px, который тянул блок вниз */
+    margin: 0; 
     font-size: 13px;
     color: var(--mu);
-    line-height: 1; /* Выравнивает текст строго по центру полосы */
+    line-height: 1; 
 }
+
+
 
 .legend .bar {
     width: 200px;
@@ -200,6 +204,9 @@ td.mono,.mono{font-family:var(--mono)}
 .score{font-family:var(--mono);font-size:18px;text-align:right}
 .score small{display:block;font-size:11px;color:var(--mu);text-transform:uppercase}
 
+
+
+
 /* =========================================
    НОВОСТИ (ПОД СЦЕНОЙ)
 ========================================= */
@@ -225,14 +232,12 @@ body.sport .news-section {
 }
 @media (max-width:1024px){
   .hero-card{grid-template-columns:1fr;gap:16px}
-  /* Узкий экран: карта сверху на всю ширину, боковые блоки под ней */
   .board{grid-template-columns:1fr 1fr;}
   .board > .side{contain:none;overflow:visible;min-height:0}
   .map-card{grid-column:1/-1;grid-row:1;}
   .court{width:100%}
 }
 @media (max-width:760px){
-  /* Мобилка: одна колонка */
   .board{grid-template-columns:1fr;}
   .side-right{order:2;} 
   .side-left{order:3;}
