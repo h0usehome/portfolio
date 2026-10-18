@@ -149,6 +149,32 @@
         .bar:hover {
             filter: brightness(1.2);
         }
+
+                /* Скрываем все страницы по умолчанию */
+        .dashboard-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out; /* Плавное появление */
+        }
+
+        /* Показываем только ту страницу, у которой есть класс active */
+        .dashboard-section.active {
+            display: block; /* Если используешь grid/flex, замени block на grid/flex */
+        }
+
+        /* Стили для активного пункта бокового меню (для примера) */
+        .nav-item.active {
+            background: rgba(255, 40, 0, 0.1); /* Легкая красная подсветка */
+            color: #FF2800; /* Цвет Ferrari F1 */
+            border-left: 4px solid #FF2800;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+
+
     </style>
 </head>
 <body class="flex h-screen w-full">
@@ -168,32 +194,16 @@
 
         <!-- Навигация (8 разделов) -->
         <nav class="flex-1 overflow-y-auto mt-4">
-            <ul id="nav-menu">
-                <li class="nav-item active">
-                    <span class="nav-num">01</span> Главная страница
-                </li>
-                <li class="nav-item">
-                    <span class="nav-num">02</span> Статистика команды
-                </li>
-                <li class="nav-item">
-                    <span class="nav-num">03</span> Стат. анализ
-                </li>
-                <li class="nav-item">
-                    <span class="nav-num">04</span> Операционная
-                </li>
-                <li class="nav-item">
-                    <span class="nav-num">05</span> Профиль гонщика
-                </li>
-                <li class="nav-item">
-                    <span class="nav-num">06</span> Рейтинги
-                </li>
-                <li class="nav-item">
-                    <span class="nav-num">07</span> Предиктивная
-                </li>
-                <li class="nav-item">
-                    <span class="nav-num">08</span> Сравнение команд
-                </li>
-            </ul>
+        <nav class="sidebar">
+            <a href="#page-1" class="nav-item active">01 Обзор</a>
+            <a href="#page-2" class="nav-item">02 Статистика команды</a>
+            <a href="#page-3" class="nav-item">03 Стат. анализ</a>
+            <a href="#page-4" class="nav-item">04 Операционная</a>
+            <a href="#page-5" class="nav-item">05 Профиль гонщика</a>
+            <a href="#page-6" class="nav-item">06 Рейтинги</a>
+            <a href="#page-7" class="nav-item">07 Предиктивная</a>
+            <a href="#page-8" class="nav-item">08 Сравнение команд</a>
+        </nav>
         </nav>
 
         <!-- Футер сайдбара -->
@@ -210,7 +220,7 @@
     </aside>
 
     <!-- Основной контент -->
-    <main class="flex-1 flex flex-col h-screen overflow-y-auto relative">
+    <main class="content">
         
         <!-- Заголовок страницы -->
         <header class="px-10 py-8 flex justify-between items-end">
@@ -315,19 +325,33 @@
     </main>
 
     <script>
-        // Простой скрипт для переключения активных вкладок в боковом меню
-        document.addEventListener('DOMContentLoaded', () => {
-            const navItems = document.querySelectorAll('.nav-item');
+document.addEventListener('DOMContentLoaded', () => {
+    // Находим все ссылки в боковом меню и все страницы (секции)
+    const navLinks = document.querySelectorAll('.nav-item');
+    const sections = document.querySelectorAll('.dashboard-section');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault(); // Отменяем стандартный переход по ссылке
+
+            // 1. Убираем класс 'active' у всех пунктов меню и всех страниц
+            navLinks.forEach(nav => nav.classList.remove('active'));
+            sections.forEach(sec => sec.classList.remove('active'));
+
+            // 2. Добавляем класс 'active' тому пункту меню, на который кликнули
+            this.classList.add('active');
+
+            // 3. Получаем ID нужной страницы из атрибута href (например, #page-2)
+            const targetId = this.getAttribute('href').substring(1); 
             
-            navItems.forEach(item => {
-                item.addEventListener('click', () => {
-                    // Удаляем active у всех
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    // Добавляем кликнутому
-                    item.classList.add('active');
-                });
-            });
+            // 4. Находим нужную страницу по ID и показываем её
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
         });
-    </script>
+    });
+});
+</script>
 </body>
 </html>
