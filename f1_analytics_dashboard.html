@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Базовая палитра (Глубокий темный) */
+            --bg-main: #0A0A0C;
+            --bg-surface: #131316;
+            --border-color: #2A2A30;
+            
+            /* Текст */
+            --text-main: #ECECEF;
+            --text-muted: #8A8A93;
+
+            /* Акцентные цвета из PDF */
+            --c-red: #E8002D;
+            --c-blue: #00D2FE;
+            --c-orange: #FF8A1F;
+            --c-yellow: #FFD600;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            overflow: hidden; /* Для SPA-структуры */
+        }
+
+        /* Боковое меню */
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.875rem 1.5rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.95rem;
+            border-right: 3px solid transparent;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            color: var(--text-main);
+            background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+        }
+
+        .nav-item.active {
+            color: var(--c-red);
+            /* Используем color-mix для создания идеального полупрозрачного фона от акцентного цвета */
+            background: color-mix(in srgb, var(--c-red) 12%, transparent);
+            border-right: 3px solid var(--c-red);
+        }
+
+        .nav-num {
+            font-size: 0.75rem;
+            opacity: 0.5;
+            margin-right: 1rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* KPI Карточки */
+        .kpi-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            /* Неоновое свечение при наведении с использованием color-mix */
+            box-shadow: 0 10px 30px color-mix(in srgb, var(--theme-color) 20%, transparent);
+            border-color: color-mix(in srgb, var(--theme-color) 50%, transparent);
+        }
+
+        /* Верхняя акцентная линия у карточки */
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--theme-color);
+            box-shadow: 0 0 15px var(--theme-color);
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+
+        .kpi-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+            color: var(--theme-color);
+            /* Текстовое неоновое свечение */
+            text-shadow: 0 0 25px color-mix(in srgb, var(--theme-color) 40%, transparent);
+            margin-bottom: 0.5rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .kpi-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Кастомный скроллбар */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* Графики - заглушки */
+        .chart-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 100%;
+            padding: 2rem 1rem 0;
+            gap: 12px;
+        }
+        .bar {
+            flex: 1;
+            background: var(--c-red);
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+            box-shadow: 0 0 15px color-mix(in srgb, var(--c-red) 30%, transparent);
+            transition: height 0.5s ease-out;
+        }
+        .bar:hover {
+            filter: brightness(1.2);
+        }
+    </style>
+</head>
+<body class="flex h-screen w-full">
+
+    <!-- Боковая панель навигации -->
+    <aside class="w-72 flex flex-col flex-shrink-0" style="background: var(--bg-surface); border-right: 1px solid var(--border-color);">
+        <!-- Логотип -->
+        <div class="p-8 pb-4">
+            <div class="flex items-center gap-4 mb-2">
+                <div class="text-6xl font-black italic tracking-tighter" style="color: var(--c-red);">F1</div>
+                <div class="text-sm font-semibold tracking-widest text-white leading-tight uppercase">
+                    Analytics<br>Dashboard
+                </div>
+            </div>
+            <div class="text-xs tracking-wider uppercase" style="color: var(--text-muted);">1950 &mdash; 2026</div>
+        </div>
+
+        <!-- Навигация (8 разделов) -->
+        <nav class="flex-1 overflow-y-auto mt-4">
+            <ul id="nav-menu">
+                <li class="nav-item active">
+                    <span class="nav-num">01</span> Главная страница
+                </li>
+                <li class="nav-item">
+                    <span class="nav-num">02</span> Статистика команды
+                </li>
+                <li class="nav-item">
+                    <span class="nav-num">03</span> Стат. анализ
+                </li>
+                <li class="nav-item">
+                    <span class="nav-num">04</span> Операционная
+                </li>
+                <li class="nav-item">
+                    <span class="nav-num">05</span> Профиль гонщика
+                </li>
+                <li class="nav-item">
+                    <span class="nav-num">06</span> Рейтинги
+                </li>
+                <li class="nav-item">
+                    <span class="nav-num">07</span> Предиктивная
+                </li>
+                <li class="nav-item">
+                    <span class="nav-num">08</span> Сравнение команд
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Футер сайдбара -->
+        <div class="p-6 text-xs flex items-center justify-between" style="border-top: 1px solid var(--border-color); color: var(--text-muted);">
+            <span>LIVE CONNECTION</span>
+            <div class="flex items-center gap-2">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2" style="background: var(--c-red);"></span>
+                </span>
+                2026 LIVE
+            </div>
+        </div>
+    </aside>
+
+    <!-- Основной контент -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto relative">
+        
+        <!-- Заголовок страницы -->
+        <header class="px-10 py-8 flex justify-between items-end">
+            <div>
+                <h2 class="text-xs uppercase tracking-widest mb-2" style="color: var(--c-red);">DATASET SNAPSHOT</h2>
+                <h1 class="text-3xl font-semibold text-white">Обзор базы данных</h1>
+            </div>
+        </header>
+
+        <div class="px-10 pb-10 flex flex-col gap-8">
+            
+            <!-- KPI Карточки (5 метрик) -->
+            <!-- Задаем акцентный цвет через инлайн-переменную, которая подхватывается в CSS (box-shadow, ::before, text) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
+                
+                <div class="kpi-card" style="--theme-color: var(--c-red);">
+                    <div class="kpi-value">1153</div>
+                    <div class="kpi-label">Гонок</div>
+                </div>
+
+                <div class="kpi-card" style="--theme-color: var(--c-blue);">
+                    <div class="kpi-value">879</div>
+                    <div class="kpi-label">Пилотов</div>
+                </div>
+
+                <div class="kpi-card" style="--theme-color: var(--c-orange);">
+                    <div class="kpi-value">205</div>
+                    <div class="kpi-label">Команд</div>
+                </div>
+
+                <div class="kpi-card" style="--theme-color: var(--c-yellow);">
+                    <div class="kpi-value">77</div>
+                    <div class="kpi-label">Сезонов</div>
+                </div>
+
+                <div class="kpi-card" style="--theme-color: var(--c-red);">
+                    <div class="kpi-value">249</div>
+                    <div class="kpi-label">Побед Ferrari #1</div>
+                </div>
+
+            </div>
+
+            <!-- Раздел с графиками (Placeholders) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-96">
+                
+                <!-- Bar Chart Placeholder -->
+                <div class="chart-container p-6 flex flex-col">
+                    <h3 class="text-sm font-semibold uppercase tracking-wider mb-6" style="color: var(--text-muted);">Количество гонок по декадам</h3>
+                    <div class="flex-1 w-full border-b border-l border-[#2A2A30] pb-2 pl-2 relative">
+                        <div class="bar-chart absolute inset-0 pb-2 pl-2 pr-4 pt-4">
+                            <div class="bar" style="height: 15%;" title="1950"></div>
+                            <div class="bar" style="height: 45%;" title="1960"></div>
+                            <div class="bar" style="height: 30%;" title="1970"></div>
+                            <div class="bar" style="height: 20%;" title="1980"></div>
+                            <div class="bar" style="height: 55%;" title="1990"></div>
+                            <div class="bar" style="height: 90%;" title="2000"></div>
+                            <div class="bar" style="height: 20%;" title="2010"></div>
+                            <div class="bar" style="height: 35%;" title="2020"></div>
+                        </div>
+                    </div>
+                    <!-- Подписи осей -->
+                    <div class="flex justify-between mt-2 pl-2 pr-4 text-xs font-mono" style="color: var(--text-muted);">
+                        <span>1950</span>
+                        <span>1960</span>
+                        <span>1970</span>
+                        <span>1980</span>
+                        <span>1990</span>
+                        <span>2000</span>
+                        <span>2010</span>
+                        <span>2020</span>
+                    </div>
+                </div>
+
+                <!-- Line Chart Placeholder -->
+                <div class="chart-container p-6 flex flex-col">
+                    <h3 class="text-sm font-semibold uppercase tracking-wider mb-6" style="color: var(--text-muted);">Динамика очков чемпионата</h3>
+                    <div class="flex-1 w-full border-b border-l border-[#2A2A30] relative overflow-hidden">
+                        <!-- Имитация графика SVG -->
+                        <svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+                            <!-- Линия -->
+                            <path d="M 0,80 Q 15,75 25,80 T 50,50 T 60,10 T 75,50 T 100,40" fill="none" stroke="var(--c-blue)" stroke-width="2" style="filter: drop-shadow(0 0 8px var(--c-blue));" />
+                            <!-- Точки -->
+                            <circle cx="0" cy="80" r="2" fill="var(--c-blue)" />
+                            <circle cx="25" cy="80" r="2" fill="var(--c-blue)" />
+                            <circle cx="50" cy="50" r="2" fill="var(--c-blue)" />
+                            <circle cx="60" cy="10" r="2" fill="var(--c-blue)" />
+                            <circle cx="75" cy="50" r="2" fill="var(--c-blue)" />
+                            <circle cx="100" cy="40" r="2" fill="var(--c-blue)" />
+                        </svg>
+                    </div>
+                    <div class="flex justify-between mt-2 pl-2 text-xs font-mono" style="color: var(--text-muted);">
+                        <span>1950</span>
+                        <span>1980</span>
+                        <span>1990</span>
+                        <span>2000</span>
+                        <span>2020</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Простой скрипт для переключения активных вкладок в боковом меню
+        document.addEventListener('DOMContentLoaded', () => {
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    // Удаляем active у всех
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    // Добавляем кликнутому
+                    item.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
