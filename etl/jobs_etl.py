@@ -2,22 +2,14 @@
 Jobs ETL: рынок вакансий аналитиков данных. Источники -> нормализация -> PostgreSQL (Supabase).
 
 Источники (открытые, без ключа):
-  remotive   https://remotive.com/api/remote-jobs   (удалённые вакансии, категория data; просят не чаще нескольких раз в сутки)
-  arbeitnow  https://www.arbeitnow.com/api/job-board-api  (вакансии Европы, постранично)
+  hh_ru       https://api.hh.ru/vacancies (Россия, area=113)
+  rabota_by   https://api.hh.ru/vacancies (Беларусь, area=16)
 
 Запуск:
   python3 etl/jobs_etl.py run                      # все источники
-  python3 etl/jobs_etl.py run --source remotive    # один источник
+  python3 etl/jobs_etl.py run --source hh_ru       # один источник
   python3 etl/jobs_etl.py run --dry-run            # скачать и разобрать, ничего не писать в БД
 
-Что делает пайплайн: etl/jobs_etl.py
-  1. extract    : скачивает вакансии, у каждого источника свой адаптер
-  2. normalize  : единая модель вакансии, роль, уровень, зарплата в EUR/год, навыки из текста
-  3. quality    : проверки качества, предупреждения пишутся в журнал запуска
-  4. load       : raw (снимок без описаний) -> job_postings (upsert) -> job_posting_skills (замена)
-  5. log        : строка в jobs_etl_log (источник, статус, строк загружено, новых, предупреждения)
-
-Что НЕ сохраняется: тексты описаний вакансий. Описание читается в памяти только чтобы найти навыки.
 Подключение к базе и ключи берутся из nba_etl.py (положите файлы в одну папку).
 """
 import argparse
@@ -27,38 +19,31 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 
-import requests
+from curl_cffi import requests as curl_requests
 
-HEADERS = {'User-Agent': 'portfolio-jobs-etl/1.0 (personal analytics project)'}
-REMOTIVE_URL = 'https://remotive.com/api/remote-jobs'
-ARBEITNOW_URL = 'https://www.arbeitnow.com/api/job-board-api'
-ARBEITNOW_MAX_PAGES = 5
+HEADERS = {'User-Agent': 'portfolio-jobs-etl/1.0 (pinashin.official@gmail.com)'}
+HH_API_URL = 'https://api.hh.ru/vacancies'
 PAUSE = 1.0
 RAW_RETENTION_DAYS = 30
-ACTIVE_WINDOW_DAYS = 2          # вакансия активна, если её видели не позже чем 2 дня назад (согласовано с SQL-view)
+ACTIVE_WINDOW_DAYS = 2          # вакансия активна, если её видели не позже чем 2 дня назад
 
-# Обнови курсы валют (примерные)
+# Приблизительные курсы к EUR для сравнения зарплат.
 FX_TO_EUR = {'EUR': 1.0, 'USD': 0.92, 'GBP': 1.17, 'CHF': 1.05, 'CAD': 0.68, 'AUD': 0.60, 'PLN': 0.23, 'RUB': 0.010, 'BYN': 0.28}
-
-# Добавь коды, которые отдает HH (RUR и BYR)
 CURRENCY = {'us$': 'USD', '$': 'USD', 'usd': 'USD', '€': 'EUR', 'eur': 'EUR', '£': 'GBP', 'gbp': 'GBP',
             'chf': 'CHF', 'cad': 'CAD', 'aud': 'AUD', 'pln': 'PLN', 
             'rur': 'RUB', 'rub': 'RUB', 'byr': 'BYN', 'byn': 'BYN'}
 
-HH_API_URL = 'https://api.hh.ru/vacancies'
 # ================================================================ нормализация
 def strip_html(text: str) -> str:
     return html.unescape(re.sub(r'<[^>]+>', ' ', text or ''))
 
-
-ROLE_RULES = [   # порядок важен: более специфичные роли выше
-    ('Analytics Engineer', r'analytics engineer|dbt'),
-    ('Data Engineer', r'data engineer|etl|dwh|data platform|data infrastructure|big data engineer'),
-    ('Data Scientist / ML', r'data scien|machine learning|\bml\b|\bai\b engineer|research scientist|applied scientist'),
-    ('BI / Reporting', r'\bbi\b|business intelligence|reporting|tableau|power bi|looker'),
-    ('Data Analyst', r'data analy|analytics|analyst|product analy|marketing analy|financial analy'),
+ROLE_RULES = [   
+    ('Analytics Engineer', r'analytics engineer|dbt|аналитик-инженер'),
+    ('Data Engineer', r'data engineer|etl|dwh|data platform|big data|инженер данных|дата-инженер|дата инженер'),
+    ('Data Scientist / ML', r'data scien|machine learning|\bml\b|\bai\b engineer|дата-сайентист|дата сайентист|машинн\w+ обучени'),
+    ('BI / Reporting', r'\bbi\b|business intelligence|reporting|tableau|power bi|looker|аналитик bi|bi-аналитик|bi аналитик'),
+    ('Data Analyst', r'data analy|analytics|analyst|product analy|marketing analy|financial analy|аналитик данных|продуктовый аналитик|дата-аналитик|аналитик sql'),
 ]
-
 
 def classify_role(title: str, category: str = None) -> str:
     t = (title or '').lower()
@@ -70,23 +55,18 @@ def classify_role(title: str, category: str = None) -> str:
 
 def classify_seniority(title: str) -> str:
     t = (title or '').lower()
-    if re.search(r'intern|junior|\bjr\b|graduate|entry|trainee', t):
+    if re.search(r'intern|junior|\bjr\b|graduate|entry|trainee|младший|стажер|стажёр', t):
         return 'Junior'
-    if re.search(r'senior|\bsr\b|lead|principal|staff|head of|director|manager', t):
+    if re.search(r'senior|\bsr\b|lead|principal|staff|head of|director|manager|старший|ведущий|главный|руководитель|начальник', t):
         return 'Senior'
     return 'Middle'
 
 
-
 def parse_salary(text):
-    """
-    '$80,000 - $100,000' -> {'min': 80000, 'max': 100000, 'currency': 'USD', 'period': 'year'}.
-    Понимает k ('70k-90k'), валюты ($, €, £, коды), периоды (hour/month/year). Нереалистичные значения отбрасываются.
-    """
     if not text or not str(text).strip():
         return None
     t = str(text).lower().replace(',', '').replace('–', '-').replace('—', '-')
-    cur = re.search(r'(us\$|\$|€|£|usd|eur|gbp|chf|cad|aud|pln)', t)
+    cur = re.search(r'(us\$|\$|€|£|usd|eur|gbp|chf|cad|aud|pln|rur|rub|byr|byn)', t)
     nums = [float(n) * (1000 if k else 1) for n, k in re.findall(r'(\d+(?:\.\d+)?)(\s*k\b)?', t)]
     nums = [n for n in nums if n > 0][:2]
     if not nums:
@@ -98,14 +78,14 @@ def parse_salary(text):
         period, mult = 'month', 12
     elif re.search(r'per year|yearly|annual|/\s*yr\b|\byear\b|/year', t):
         period, mult = 'year', 1
-    elif hi < 500:                         # период не указан: эвристика по порядку величины
+    elif hi < 500:                         
         period, mult = 'hour', 2080
     elif hi < 20000:
         period, mult = 'month', 12
     else:
         period, mult = 'year', 1
     year_lo, year_hi = lo * mult, hi * mult
-    if not (8000 <= year_hi <= 1_000_000):  # отсекаем ошибки разметки и несерьёзные значения
+    if not (8000 <= year_hi <= 1_000_000):  
         return None
     return {'min': round(year_lo), 'max': round(year_hi), 'currency': CURRENCY.get(cur.group(1)) if cur else None, 'period': period}
 
@@ -116,7 +96,7 @@ def salary_year_eur(sal):
     return round((sal['min'] + sal['max']) / 2 * FX_TO_EUR[sal['currency']])
 
 
-SKILLS = {   # канонические названия -> регулярные выражения (поиск без учёта регистра, если не сказано иначе)
+SKILLS = {   
     'SQL': r'\bsql\b', 'Python': r'\bpython\b', 'R': None, 'Excel': r'\bexcel\b', 'Power BI': r'power\s?bi',
     'Tableau': r'\btableau\b', 'Looker': r'\blooker\b', 'dbt': r'\bdbt\b', 'Airflow': r'\bairflow\b',
     'Spark': r'\b(py)?spark\b', 'Snowflake': r'\bsnowflake\b', 'BigQuery': r'big\s?query', 'Redshift': r'\bredshift\b',
@@ -124,11 +104,11 @@ SKILLS = {   # канонические названия -> регулярные
     'AWS': r'\baws\b|amazon web services', 'Azure': r'\bazure\b', 'GCP': r'\bgcp\b|google cloud', 'Docker': r'\bdocker\b',
     'Kubernetes': r'kubernetes|\bk8s\b', 'Terraform': r'\bterraform\b', 'Git': r'\bgit(hub|lab)?\b', 'Pandas': r'\bpandas\b',
     'NumPy': r'\bnumpy\b', 'scikit-learn': r'scikit|sklearn', 'TensorFlow': r'tensorflow', 'PyTorch': r'pytorch',
-    'Statistics': r'statistic', 'A/B testing': r'a/b test|\bab test|experimentation', 'Machine Learning': r'machine learning|\bml\b',
-    'ETL': r'\betl\b|\belt\b|data pipelines?', 'Data modeling': r'data model', 'Scala': r'\bscala\b', 'SAS': r'\bsas\b',
+    'Statistics': r'statistic', 'A/B testing': r'a/b test|\bab test|experimentation|a/b-тестировани', 'Machine Learning': r'machine learning|\bml\b|машинн\w+ обучени',
+    'ETL': r'\betl\b|\belt\b|data pipelines?', 'Data modeling': r'data model|моделировани', 'Scala': r'\bscala\b', 'SAS': r'\bsas\b',
 }
 _SKILL_RX = {k: re.compile(v, re.I) for k, v in SKILLS.items() if v}
-_R_RX = re.compile(r'(?<![\w.])R(?=[\s,;/)]| programming| language)')     # «R» ищем с учётом регистра и контекста
+_R_RX = re.compile(r'(?<![\w.])R(?=[\s,;/)]| programming| language)')     
 
 
 def extract_skills(text: str) -> list:
@@ -139,7 +119,6 @@ def extract_skills(text: str) -> list:
 
 
 def iso_utc(value):
-    """ISO-строка, epoch (секунды) или None -> ISO в UTC."""
     if value in (None, ''):
         return None
     try:
@@ -168,35 +147,24 @@ def build_posting(source, source_id, title, company, category, tags, description
     return posting, extract_skills(text)
 
 
-def normalize_remotive(j, today):
-    return build_posting('remotive', j['id'], j.get('title'), j.get('company_name'), j.get('category'), j.get('tags'), j.get('description'),
-                         j.get('candidate_required_location'), True, j.get('job_type'), j.get('url'), j.get('publication_date'), j.get('salary'), today)
-
-
-def normalize_arbeitnow(j, today):
-    types = j.get('job_types') or []
-    return build_posting('arbeitnow', j['slug'], j.get('title'), j.get('company_name'), None, j.get('tags'), j.get('description'),
-                         j.get('location'), j.get('remote'), types[0] if types else None, j.get('url'), j.get('created_at'), None, today)
-
-
 # ================================================================ extract
 def http_get_json(url, params=None, retries=3):
     for attempt in range(retries):
-        r = requests.get(url, params=params, headers=HEADERS, timeout=30)
-        if r.status_code == 429:
+        # Используем curl_requests с маскировкой под Chrome
+        r = curl_requests.get(url, params=params, headers=HEADERS, impersonate="chrome120", timeout=30)
+        
+        if r.status_code in (429, 403):
             wait = 60 * (attempt + 1)
-            print(f'  429 Too Many Requests, жду {wait} с...')
+            print(f'  {r.status_code} Blocked, жду {wait} с...')
             time.sleep(wait)
             continue
+            
         r.raise_for_status()
         return r.json()
     raise RuntimeError(f'Не удалось получить {url}')
 
-
 def fetch_hh_base(area_id: int) -> list:
-    """Универсальный скачиватель для API HeadHunter."""
     jobs = []
-    # Ищем целевые data-профессии в названиях вакансий
     query = '("data analyst" OR "аналитик данных" OR "data engineer" OR "инженер данных" OR "data scientist" OR "bi analyst" OR "machine learning")'
     
     for page in range(20):
@@ -219,22 +187,22 @@ def fetch_hh_base(area_id: int) -> list:
         
     return jobs
 
+
 def fetch_hh_ru():
-    return fetch_hh_base(113)  # 113 - код России в HH
+    return fetch_hh_base(113)  
+
 
 def fetch_rabota_by():
-    return fetch_hh_base(16)   # 16 - код Беларуси в HH
+    return fetch_hh_base(16)   
 
 
 def normalize_hh(j, today, source_name='hh_ru'):
-    # Форматируем зарплату для встроенного парсера (force 'per month')
     sal_text = None
     if j.get('salary'):
         s = j['salary']
         sal_val = s.get('from') or s.get('to')
         sal_text = f"{sal_val} - {s.get('to') or sal_val} {s.get('currency')} per month"
 
-    # Извлекаем навыки из короткого сниппета
     snippet = j.get('snippet') or {}
     desc = f"{snippet.get('requirement', '')} {snippet.get('responsibility', '')}"
 
@@ -261,8 +229,10 @@ def normalize_hh(j, today, source_name='hh_ru'):
     )
     return posting, skills
 
+
 def normalize_hh_ru(j, today):
     return normalize_hh(j, today, source_name='hh_ru')
+
 
 def normalize_rabota_by(j, today):
     return normalize_hh(j, today, source_name='rabota_by')
@@ -273,11 +243,8 @@ SOURCES = {
     'rabota_by': (fetch_rabota_by, normalize_rabota_by),
 }
 
-
-
 # ================================================================ quality
 def quality_checks(postings: list, fetched: int) -> list:
-    """Возвращает список предупреждений. Критичные проблемы (нет данных вообще) поднимаются исключением выше по стеку."""
     warn = []
     now = datetime.now(timezone.utc).isoformat()
     if fetched and not postings:
@@ -291,7 +258,6 @@ def quality_checks(postings: list, fetched: int) -> list:
         warn.append('есть вакансии без ссылки')
     return warn
 
-
 # ================================================================ load
 def existing_first_seen(sb, source):
     out, offset = {}, 0
@@ -301,7 +267,6 @@ def existing_first_seen(sb, source):
         if len(res.data) < 1000:
             return out
         offset += 1000
-
 
 def load(sb, source, postings, skills_by_key, raw_rows, today):
     known = existing_first_seen(sb, source)
@@ -314,7 +279,7 @@ def load(sb, source, postings, skills_by_key, raw_rows, today):
     for part in chunks(postings, 200):
         sb.table('job_postings').upsert(part, on_conflict='job_key').execute()
     keys = [p['job_key'] for p in postings]
-    for part in chunks(keys, 100):                               # навыки заменяем целиком: описание могло измениться
+    for part in chunks(keys, 100):                               
         sb.table('job_posting_skills').delete().in_('job_key', part).execute()
     skill_rows = [{'job_key': k, 'skill': s} for k, ss in skills_by_key.items() for s in ss]
     for part in chunks(skill_rows, 500):
@@ -323,13 +288,9 @@ def load(sb, source, postings, skills_by_key, raw_rows, today):
     sb.table('jobs_raw').delete().lt('fetched_date', cutoff).execute()
     return new_jobs
 
-
 def chunks(items, size):
     for i in range(0, len(items), size):
         yield items[i:i + size]
-
-
-
 
 # ================================================================ запуск источника
 def run_source(name, sb, dry_run=False, seen_pairs=None):
@@ -350,7 +311,7 @@ def run_source(name, sb, dry_run=False, seen_pairs=None):
                 continue
             if posting['role_group'] == 'Other':
                 continue
-            pair = ((posting['company'] or '').lower(), posting['title'].lower())      # одна и та же вакансия в двух источниках
+            pair = ((posting['company'] or '').lower(), posting['title'].lower())      
             if pair in seen_pairs:
                 dupes += 1
                 continue
@@ -358,9 +319,9 @@ def run_source(name, sb, dry_run=False, seen_pairs=None):
             postings.append(posting)
             skills_by_key[posting['job_key']] = skills
             raw_rows.append({'source': name, 'source_id': posting['source_id'], 'fetched_date': today.isoformat(),
-                             'payload': {k: v for k, v in j.items() if k != 'description'}})     # тексты описаний не храним
+                             'payload': {k: v for k, v in j.items() if k != 'description'}})     
         stats['kept'] = len(postings)
-        eligible = len(postings) + dupes                          # прошли фильтр по ролям (до отбрасывания дублей)
+        eligible = len(postings) + dupes                          
         warnings = quality_checks(postings, len(raw_jobs)) if eligible else quality_checks([], len(raw_jobs))
         if postings == [] and dupes:
             warnings = [w for w in warnings if 'не осталось' not in w]
@@ -375,7 +336,7 @@ def run_source(name, sb, dry_run=False, seen_pairs=None):
             if postings:
                 stats['new_jobs'] = load(sb, name, postings, skills_by_key, raw_rows, today)
                 print(f'  {name}: новых вакансий {stats["new_jobs"]}')
-    except Exception as e:                                       # ошибка одного источника не останавливает остальные
+    except Exception as e:                                       
         stats['status'] = 'error'
         stats['notes'] = f'{type(e).__name__}: {e}'[:500]
         print(f'  {name}: ОШИБКА {stats["notes"]}')
@@ -388,7 +349,6 @@ def run_source(name, sb, dry_run=False, seen_pairs=None):
                 print(f'  не удалось записать журнал запуска: {e}')
     return stats
 
-
 def main(argv=None):
     ap = argparse.ArgumentParser(description='Jobs ETL')
     sub = ap.add_subparsers(dest='cmd', required=True)
@@ -399,6 +359,7 @@ def main(argv=None):
 
     sb = None
     if not args.dry_run:
+        # Убедись, что nba_etl.py лежит в той же папке для импорта get_client
         from nba_etl import get_client
         sb = get_client()
     names = list(SOURCES) if args.source == 'all' else [args.source]
@@ -407,7 +368,6 @@ def main(argv=None):
     for name in names:
         failed += run_source(name, sb, args.dry_run, seen)['status'] == 'error'
     sys.exit(1 if failed else 0)
-
 
 if __name__ == '__main__':
     main()
