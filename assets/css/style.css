@@ -312,7 +312,7 @@ h1 span { color: var(--ac); }
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
     display: flex; 
     flex-direction: column; 
-    justify-content: center;
+    justify-content: top;
 }
 .proof-content h3 { margin: 0 0 12px 0; font-size: 18px; color: var(--ac); }
 .proof-content p { margin: 0 0 16px 0; color: var(--mu); font-size: 15px; }
