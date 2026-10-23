@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Analytics Dashboard</title>
+    <link rel="icon" href="data:,">
+    
+    <!-- Подключаем стили -->
+    <link rel="stylesheet" href="formula1_analytics.css">
+    
+    <!-- 1. Supabase JS Client (для работы с БД) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- 2. D3.js (для графиков) -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+</head>
+<body>
+<header class="main-header glass-panel">
+    <div>
+        <h1>F1 <span>TELEMETRY</span> DASHBOARD</h1>
+        <p>Интерактивный анализ исторической производительности команд (1950 - 2024)</p>
+    </div>
+</header>
+
+    <!-- БЛОК СТАТИСТИКИ КОМАНД -->
+    <div class="team-dashboard-section">
+        <div class="cyber-header">
+    <div class="header-main">
+        <span class="header-num">01</span>
+        <div class="header-titles">
+            <h2>СТАТИСТИКА КОМАНДЫ</h2>
+            <p>Полная история конструктора — смените команду для пересборки данных</p>
+        </div>
+    </div>
+    <div class="header-badge">2026 LIVE</div>
+</div>
+
+        <!-- ОБНОВЛЕННЫЙ СЕЛЕКТОР (Alpine и Audi) -->
+        <nav class="team-selector">
+            <button class="team-btn active">Ferrari</button>
+            <button class="team-btn">Red Bull</button>
+            <button class="team-btn">Mercedes</button>
+            <button class="team-btn">McLaren</button>
+            <button class="team-btn">Williams</button>
+            <button class="team-btn">Renault</button>
+        </nav>
+
+        <!-- РЯД ГЛАВНЫХ МЕТРИК -->
+        <div class="team-kpi-row">
+            <div class="team-kpi-card" id="card-wins">
+                <div class="kpi-big-value" id="val-wins">249</div>
+                <div class="kpi-main-label">Победы · 1950–2026</div>
+                <div class="kpi-sub highlight-green" id="sub-wins">#1 всех времён</div>
+            </div>
+            <div class="team-kpi-card" id="card-champs">
+                <div class="kpi-big-value" id="val-champs">16</div>
+                <div class="kpi-main-label">Кубков конструкторов</div>
+                <div class="kpi-sub">&nbsp;</div> 
+            </div>
+            <div class="team-kpi-card" id="card-podiums">
+                <div class="kpi-big-value" id="val-podiums">812</div>
+                <div class="kpi-main-label">Подиумов</div>
+                <div class="kpi-sub highlight-green" id="sub-podiums">69% win→podium</div>
+            </div>
+            <div class="team-kpi-card" id="card-finish">
+                <div class="kpi-big-value" id="val-finish">71%</div>
+                <div class="kpi-main-label">Среднее % финиша</div>
+                <div class="kpi-sub">&nbsp;</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Асимметричная сетка Bento Box -->
+    <div class="bento-grid">
+
+        <!-- График: Победы по десятилетиям -->
+        <div class="card bento-chart-1">
+            <h2>Победы по сезонам (Десятилетия)</h2>
+            <div class="chart-wrapper">
+                <div id="wins-chart"></div>
+            </div>
+        </div>
+
+        <!-- График: Очки в чемпионате -->
+        <div class="card bento-chart-2">
+            <h2>Очки в чемпионате — Динамика</h2>
+            <div class="chart-wrapper">
+                <div id="points-chart"></div>
+            </div>
+        </div>
+        <!-- График 3: Лучшие гонщики команды (Вместо телеметрии) -->
+        <div class="card bento-telemetry">
+            <h2>Топ-10 гонщиков команды (по очкам)</h2>
+            <div class="chart-wrapper">
+                <div id="drivers-chart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- СЕКЦИЯ 2: ВНУТРИКОМАНДНЫЕ ДУЭЛИ -->
+<div class="duel-section">
+    
+    <!-- Наша новая красивая шапка -->
+    <div class="cyber-header">
+        <div class="header-main">
+            <span class="header-num">02</span>
+            <div class="header-titles">
+                <h2>АНАЛИЗ ПИЛОТОВ: ЛОБОВОЕ СТОЛКНОВЕНИЕ</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- ВАЖНО: Контейнер-сетка, который держит 3 элемента в ряд -->
+    <div class="duel-grid">
+        
+        <!-- Левый пилот -->
+        <div class="driver-card glass-panel">
+            <select id="driver1-select" class="cyber-select"></select>
+            <div class="driver-stats-grid">
+                <div class="stat-box"><span>Гонки</span><h3 id="d1-races">-</h3></div>
+                <div class="stat-box"><span>Победы</span><h3 id="d1-wins">-</h3></div>
+                <div class="stat-box"><span>Подиумы</span><h3 id="d1-podiums">-</h3></div>
+                <div class="stat-box"><span>Поулы</span><h3 id="d1-poles">-</h3></div>
+            </div>
+        </div>
+
+        <!-- Центр: Контейнер для Радара -->
+        <div class="radar-container glass-panel">
+            <div id="duel-radar-chart"></div>
+        </div>
+
+        <!-- Правый пилот -->
+        <div class="driver-card glass-panel">
+            <select id="driver2-select" class="cyber-select"></select>
+            <div class="driver-stats-grid">
+                <div class="stat-box"><span>Гонки</span><h3 id="d2-races">-</h3></div>
+                <div class="stat-box"><span>Победы</span><h3 id="d2-wins">-</h3></div>
+                <div class="stat-box"><span>Подиумы</span><h3 id="d2-podiums">-</h3></div>
+                <div class="stat-box"><span>Поулы</span><h3 id="d2-poles">-</h3></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+        <!-- СЕКЦИЯ 3: ГЕОГРАФИЯ ДОМИНАЦИИ -->
+        <div class="cyber-header">
+    <div class="header-main">
+        <span class="header-num">03</span>
+        <div class="header-titles">
+            <h2>ГЕОГРАФИЯ ДОМИНАЦИИ: АНАЛИЗ ТРАСС</h2>
+        </div>
+    </div>
+</div>  
+                <!-- Левая панель: Выбор трассы и статистика -->
+                <div class="track-details glass-panel">
+                    <select id="track-select" class="cyber-select"></select>
+                    <div class="track-location">
+                        <span id="track-country" style="color: #8a8a9d; font-size: 14px; text-transform: uppercase;">-</span>
+                    </div>
+                    <div class="driver-stats-grid" style="margin-top: 20px;">
+                        <div class="stat-box"><span>Гонки тут</span><h3 id="t-races">-</h3></div>
+                        <div class="stat-box"><span>Победы</span><h3 id="t-wins">-</h3></div>
+                        <div class="stat-box"><span>Подиумы</span><h3 id="t-podiums">-</h3></div>
+                        <div class="stat-box"><span>Win Rate</span><h3 id="t-rate">-</h3></div>
+                    </div>
+                </div>
+
+                <!-- Правая панель: График лучших трасс -->
+                <div class="track-chart-container glass-panel">
+                    <h3 style="color: #fff; margin-top: 0; margin-bottom: 20px; font-size: 16px; font-weight: 500;">Топ-7 самых успешных Гран-при</h3>
+                    <div id="tracks-chart">
+                        <!-- Здесь будет отрисован Lollipop Chart -->
+                    </div>
+                </div>
+
+
+        <!-- СЕКЦИЯ 4: НАДЕЖНОСТЬ И МЕХАНИКА -->
+        <div class="pitwall-section">
+            
+            <!-- Шапка -->
+            <div class="cyber-header">
+                <div class="header-main">
+                    <span class="header-num">04</span>
+                    <div class="header-titles">
+                        <h2>PIT WALL: НАДЕЖНОСТЬ БОЛИДОВ</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВАЖНО: Контейнер-сетка на 2 колонки -->
+            <div class="pitwall-grid">
+                
+                <!-- Левая панель: Цифры -->
+                <div class="reliability-details glass-panel">
+                    <h3 style="color: #fff; margin-top: 0; margin-bottom: 20px; font-size: 16px;">Историческая сводка</h3>
+                    <div class="driver-stats-grid">
+                        <div class="stat-box"><span>Всего стартов</span><h3 id="r-starts">-</h3></div>
+                        <div class="stat-box"><span>Финиши</span><h3 id="r-finishes">-</h3></div>
+                        <div class="stat-box"><span>Сходы (Техника)</span><h3 id="r-mech">-</h3></div>
+                        <div class="stat-box"><span>Сходы (Аварии)</span><h3 id="r-crash">-</h3></div>
+                    </div>
+                </div>
+
+                <!-- Правая панель: Кольцевой график -->
+                <div class="reliability-chart-container glass-panel">
+                    <div id="reliability-donut-chart"></div>
+                    <!-- Легенда -->
+                    <div class="donut-legend">
+                        <div class="legend-item"><span class="dot dot-finish"></span> Финиш</div>
+                        <div class="legend-item"><span class="dot dot-mech"></span> Техника</div>
+                        <div class="legend-item"><span class="dot dot-crash"></span> Авария</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- СЕКЦИЯ 5: АНАЛИТИЧЕСКИЙ ПОДВАЛ -->
+        <footer class="cyber-footer glass-panel">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>F1 <span>ANALYTICS</span></h2>
+                    <p>Интерактивный дашборд исторической телеметрии</p>
+                </div>
+                
+                <div class="footer-links">
+                    <div class="link-column">
+                        <h4>Источники данных</h4>
+                        <ul>
+                            <li><a href="https://github.com/jcnewell/ergast-f1-api" target="_blank">Ergast Developer API</a></li>
+                            <li>Supabase (PostgreSQL)</li>
+                        </ul>
+                    </div>
+                    <div class="link-column">
+                        <h4>Технологии</h4>
+                        <ul>
+                            <li>D3.js (Data-Driven Documents)</li>
+                            <li>Vanilla JS + Glassmorphism UI</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2026 F1 Analytics Project. Разработано для портфолио.</p>
+                <div class="tech-badges">
+                    <span class="badge">Live Data</span>
+                    <span class="badge">Interactive</span>
+                </div>
+            </div>
+        </footer>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="formula1_analytics.js"></script>
+</body>
+</html>
