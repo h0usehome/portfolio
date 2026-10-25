@@ -128,7 +128,7 @@ h1 span { color: var(--ac); }
     border-radius: 50%;
     border: 2px dashed var(--ac);
     opacity: .8;
-    transition: opacity 0.5s ease-out; 
+    transition: opacity 0.9s ease-out; 
     z-index: 2;
 }
 
@@ -136,7 +136,7 @@ h1 span { color: var(--ac); }
     opacity: 1;
     animation: spin 12s linear infinite; 
 }
-.stage:hover img { transform: scale(1.08); }
+.stage:hover img { transform: scale(1.05); }
 
 .chip {
     position: absolute;
