@@ -19,3 +19,18 @@ td .team-dot{margin-right:6px}
 .f1 .kpi{min-width:0;overflow:hidden}
 .f1 .kpi .v{font-size:14px;white-space:nowrap}
 .f1 .kpi .l{font-size:10.5px}
+
+
+/* Переопределяем размеры логотипов только для Формулы 1 */
+.f1 .tlogo {
+    width: auto;
+    height: 14px;      /* Высота под текст */
+    max-width: 65px;   /* Чтобы длинные названия не ломали верстку */
+    object-fit: contain;
+    border-radius: 0;
+}
+
+.f1 .chip-game .tlogo {
+    height: 18px;
+    max-width: 80px;
+}
