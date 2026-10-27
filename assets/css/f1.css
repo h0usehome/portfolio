@@ -34,3 +34,25 @@ td .team-dot{margin-right:6px}
     height: 18px;
     max-width: 80px;
 }
+
+/* 1. Увеличиваем логотипы команд в левом списке (снимаем ограничения от NBA) */
+body.f1 .who .tlogo {
+    width: auto;
+    height: 20px;          /* Делаем логотипы заметно выше */
+    max-width: 90px;       /* Разрешаем им быть длинными */
+    object-fit: contain;
+    margin-right: 4px;
+}
+
+/* 2. Расширяем левую колонку для десктопов, чтобы всё влезло */
+@media (min-width: 1025px) {
+    body.f1 .board {
+        /* Меняем базовые 250px на 340px */
+        grid-template-columns: minmax(340px, 1.15fr) minmax(0, 2.5fr) minmax(290px, 0.95fr);
+    }
+}
+@media (max-width: 1280px) and (min-width: 1025px) {
+    body.f1 .board {
+        grid-template-columns: 330px minmax(0, 1fr) 280px;
+    }
+}

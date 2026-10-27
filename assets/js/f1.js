@@ -342,15 +342,25 @@ function renderLeft() {
 
   const ol = $('#leftList'); ol.replaceChildren();
 
-  // Обновленная функция отрисовки одной строки с поддержкой фото гонщиков и ЛОГОТИПОВ команд
-    const row = (i, p, metaText, big, small) => {
-      const li = h('li', { class: p.photo_url ? 'has-avatar' : '' });
-      
-      // 1. Номер (ранк)
-      li.append(h('span', { class: 'rank', text: i + 1 }));
-      
-      // 2. Аватарка или инициалы
-      const photo = p.photo_url ;
+  // СОБИРАЕМ СЛОВАРЬ АВАТАРОК И ЛОГОТИПОВ (чтобы применить ко всем вкладкам)
+  const assets = {};
+  [...(state.results || []), ...(state.standings || [])].forEach(r => {
+    if (r.driver_id && !assets[r.driver_id]) {
+        assets[r.driver_id] = { photo: r.photo_url, logo: r.team_logo, team: r.team };
+    }
+  });
+
+  const row = (i, p, metaText, big, small) => {
+    // Подтягиваем данные из словаря assets, если в самом объекте p их нет
+    const drv = assets[p.driver_id] || {};
+    const photo = p.photo_url || drv.photo;
+    const logo = p.team_logo || drv.logo;
+    const teamName = p.constructor_name || p.team || drv.team || '';
+
+    const li = h('li', { class: photo ? 'has-avatar' : '' });
+    li.append(h('span', { class: 'rank', text: i + 1 }));
+    
+    // Аватар пилота
     if (photo) {
       li.append(h('img', { class: 'avatar', src: photo, alt: p.driver_name, loading: 'lazy' }));
     } else {
@@ -358,26 +368,21 @@ function renderLeft() {
       li.append(h('div', { class: 'avatar initials', text: init }));
     }
 
-      // 3. Плашка команды: используем team_logo если есть, иначе цветной квадратик
-      const teamName = p.constructor_name || p.team || '';
-      const badgeColor = p.team_color || teamColor(teamName);
-      
-      const teamLogo = p.team_logo
-          ? h('img', { class: 'tlogo', src: p.team_logo, alt: teamName })
-          : h('span', { class: 'tbadge', style: `background: ${badgeColor}`, text: teamName.substring(0, 3).toUpperCase() });
-      
-      // 4. Блок "Кто"
-      const who = h('div', { class: 'who' }, 
-        h('b', { text: p.driver_name }), 
-        h('span', {}, teamLogo, ` ${metaText}`)
-      );
-      li.append(who);
+    // Логотип команды
+    const badgeColor = p.team_color || teamColor(teamName);
+    const teamBadge = logo
+        ? h('img', { class: 'tlogo', src: logo, alt: teamName })
+        : h('span', { class: 'tbadge', style: `background: ${badgeColor}`, text: teamName.substring(0, 3).toUpperCase() });
+    
+    const who = h('div', { class: 'who' }, 
+      h('b', { text: p.driver_name }), 
+      h('span', {}, teamBadge, ` ${metaText}`)
+    );
+    li.append(who);
 
-      // 5. Очки / Результат
-      li.append(h('div', { class: 'score' }, h('span', { text: big }), h('small', { text: small })));
-
-      ol.append(li);
-    };
+    li.append(h('div', { class: 'score' }, h('span', { text: big }), h('small', { text: small })));
+    ol.append(li);
+  };
 
   const v = state.leftView;
   if (v === 'drivers') {
