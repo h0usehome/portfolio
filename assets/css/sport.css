@@ -198,9 +198,31 @@ td.mono,.mono{font-family:var(--mono)}
     width: 64px;
     height: 64px;
 }
-.who b{display:block;font-weight:500;font-size:14px;line-height:1.35}
-.who span{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--mu);margin-top:2px}
-.who .tlogo,.who .tbadge{width:16px;height:16px}
+/* Добавляем min-width: 0, чтобы Grid позволял тексту обрезаться */
+.who { min-width: 0; }
+
+.who b {
+    display: block;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.35;
+    /* Запрещаем перенос и добавляем троеточие для длинных имен */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.who span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--mu);
+    margin-top: 2px;
+}
+
+.who .tlogo, .who .tbadge { width: 16px; height: 16px; }
 .score{font-family:var(--mono);font-size:18px;text-align:right}
 .score small{display:block;font-size:11px;color:var(--mu);text-transform:uppercase}
 
