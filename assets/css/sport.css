@@ -85,7 +85,7 @@ section.w{margin-bottom:20px}
 ========================================= */
 .board{
   display:grid;
-  grid-template-columns:minmax(250px,.9fr) minmax(0,2.7fr) minmax(290px,.95fr);
+  grid-template-columns:minmax(320px,.9fr) minmax(0,2.7fr) minmax(290px,.95fr);
   gap:20px;
   align-items:stretch;
 }
@@ -250,7 +250,7 @@ body.sport .news-section {
    АДАПТИВНОСТЬ
 ========================================= */
 @media (max-width:1280px){
-  .board{grid-template-columns:250px minmax(0,1fr) 280px;}
+  .board{grid-template-columns:320px minmax(0,1fr) 280px;}
 }
 @media (max-width:1024px){
   .hero-card{grid-template-columns:1fr;gap:16px}
