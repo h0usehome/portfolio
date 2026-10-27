@@ -963,6 +963,7 @@ header#top .header-desc {
 /* === НОВАЯ ШАПКА ДАШБОРДА === */
 .top-panel {
     display: flex;
+    flex-wrap: wrap; /* Добавь эту строчку */
     justify-content: space-between;
     align-items: center;
     background: rgba(25, 26, 35, 0.6);
@@ -1056,9 +1057,13 @@ header#top .header-desc {
 }
 
 .filter-btn img {
-    width: 26px;
-    height: 26px;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px;
+    max-width: 28px;
     object-fit: contain;
+    display: block;
+    flex-shrink: 0; /* Запрещает сжимать или растягивать картинку */
 }
 
 .f-text {
