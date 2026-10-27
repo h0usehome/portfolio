@@ -247,16 +247,38 @@ new ResizeObserver(() => drawChart()).observe($('#chart'));
 function renderHead() {
   const r = state.race;
   if (!r) { $('#subtitle').textContent = 'Нет данных о гонках'; return; }
+  
   $('#title').textContent = r.race_name;
   const [y, m, d] = r.race_date.split('-').map(Number);
   const date = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).replace(/\s*г\.$/, '');
   $('#subtitle').textContent = `${r.circuit_name}, ${r.locality}, ${r.country} · ${date} г. · этап ${r.round} сезона ${r.season} · кругов: ${r.total_laps ?? '—'}`;
+  
   const box = $('#results'); box.replaceChildren();
-  const all = h('button', { type: 'button', class: 'chip-game', 'aria-pressed': !isFiltered(), text: 'Все пилоты' });
-  all.onclick = () => setFilter({ team: 'all', driver: 'all' }); box.append(all);
-  state.results.filter((x) => x.position && x.position <= 3).forEach((x) => {
-    const b = h('button', { type: 'button', class: 'chip-game', 'aria-pressed': state.f.driver === x.driver_id }, dot(teamColor(x.team)), h('b', { text: `P${x.position}` }), h('span', { text: x.code }), h('span', { class: 'mu', text: x.team }));
-    b.onclick = () => setFilter({ team: x.team, driver: x.driver_id }); box.append(b);
+  
+  // Кнопка "Все пилоты"
+  const all = h('button', { type: 'button', class: 'chip-game all', 'aria-pressed': !isFiltered(), text: 'Все пилоты' });
+  all.onclick = () => setFilter({ team: 'all', driver: 'all' }); 
+  box.append(all);
+
+  // Выводим ТОП-5 пилотов в шапку (вместо 3)
+  state.results.filter((x) => x.position && x.position <= 5).forEach((x) => {
+    // Если есть фото, берем его, иначе инициалы
+    const avatar = x.photo_url 
+      ? h('img', { class: 'avatar sm', src: x.photo_url, alt: x.code, loading: 'lazy' }) 
+      : h('div', { class: 'avatar sm initials', text: x.code || '?' });
+      
+    // Если есть логотип команды, берем его, иначе цветную точку
+    const teamLogo = x.team_logo 
+      ? h('img', { class: 'tlogo', src: x.team_logo, alt: x.team }) 
+      : dot(teamColor(x.team));
+
+    // Собираем 2 строки внутри плашки: (Фото + Позиция + Имя) и (Логотип + Команда)
+    const r1 = h('div', { class: 'tm' }, avatar, h('b', { text: `P${x.position}` }), h('span', { class: 'ab', text: x.code }));
+    const r2 = h('div', { class: 'tm lose' }, teamLogo, h('span', { class: 'ab', text: x.team }));
+
+    const b = h('button', { type: 'button', class: 'chip-game', 'aria-pressed': state.f.driver === x.driver_id }, r1, r2);
+    b.onclick = () => setFilter({ team: x.team, driver: x.driver_id }); 
+    box.append(b);
   });
 }
 
@@ -315,38 +337,41 @@ function renderLeft() {
 
   const ol = $('#leftList'); ol.replaceChildren();
 
-  // Обновленная функция отрисовки одной строки с поддержкой фото и цветов команд
-  const row = (i, p, metaText, big, small) => {
-    const li = h('li', { class: p.photo_url ? 'has-avatar' : '' });
-    
-    // 1. Номер (ранк)
-    li.append(h('span', { class: 'rank', text: i + 1 }));
-    
-    // 2. Аватарка или инициалы
-    if (p.photo_url) {
-      li.append(h('img', { class: 'avatar', src: p.photo_url, alt: p.driver_name, loading: 'lazy' }));
-    } else {
-      const init = p.code || (p.driver_name ? p.driver_name.substring(0, 3).toUpperCase() : '???');
-      li.append(h('div', { class: 'avatar initials', text: init }));
-    }
+  // Обновленная функция отрисовки одной строки с поддержкой фото гонщиков и ЛОГОТИПОВ команд
+    const row = (i, p, metaText, big, small) => {
+      const li = h('li', { class: p.photo_url ? 'has-avatar' : '' });
+      
+      // 1. Номер (ранк)
+      li.append(h('span', { class: 'rank', text: i + 1 }));
+      
+      // 2. Аватарка или инициалы
+      if (p.photo_url) {
+        li.append(h('img', { class: 'avatar', src: p.photo_url, alt: p.driver_name, loading: 'lazy' }));
+      } else {
+        const init = p.code || (p.driver_name ? p.driver_name.substring(0, 3).toUpperCase() : '???');
+        li.append(h('div', { class: 'avatar initials', text: init }));
+      }
 
-    // 3. Плашка команды и мета-текст
-    const teamName = p.constructor_name || p.team || '';
-    const badgeColor = p.team_color || teamColor(teamName);
-    const badge = h('span', { class: 'tbadge', style: `background: ${badgeColor}`, text: teamName.substring(0, 3).toUpperCase() });
-    
-    // 4. Блок "Кто"
-    const who = h('div', { class: 'who' }, 
-      h('b', { text: p.driver_name }), 
-      h('span', {}, badge, ` ${metaText}`)
-    );
-    li.append(who);
+      // 3. Плашка команды: используем team_logo если есть, иначе цветной квадратик
+      const teamName = p.constructor_name || p.team || '';
+      const badgeColor = p.team_color || teamColor(teamName);
+      
+      const teamLogo = p.team_logo
+          ? h('img', { class: 'tlogo', src: p.team_logo, alt: teamName })
+          : h('span', { class: 'tbadge', style: `background: ${badgeColor}`, text: teamName.substring(0, 3).toUpperCase() });
+      
+      // 4. Блок "Кто"
+      const who = h('div', { class: 'who' }, 
+        h('b', { text: p.driver_name }), 
+        h('span', {}, teamLogo, ` ${metaText}`)
+      );
+      li.append(who);
 
-    // 5. Очки / Результат
-    li.append(h('div', { class: 'score' }, h('span', { text: big }), h('small', { text: small })));
+      // 5. Очки / Результат
+      li.append(h('div', { class: 'score' }, h('span', { text: big }), h('small', { text: small })));
 
-    ol.append(li);
-  };
+      ol.append(li);
+    };
 
   const v = state.leftView;
   if (v === 'drivers') {
