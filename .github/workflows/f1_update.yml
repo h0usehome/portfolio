@@ -32,5 +32,5 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          python3 f1_etl_2.py last
-          python3 f1_etl_2.py news
+          python3 f1_etl.py last
+          python3 f1_etl.py news
