@@ -20,35 +20,63 @@
     
 </head>
 <body>
-<!-- Новая шапка в едином стиле -->
-<header id="top">
-    <a href="/" class="nav-back"><span>←</span> Назад</a>
-    <h1>F1 <span>TELEMETRY</span> DASHBOARD</h1>
-    <div class="header-desc">Интерактивный анализ исторической производительности команд (1950 - 2024)</div>
-</header>
-
-    <!-- БЛОК СТАТИСТИКИ КОМАНД -->
-    <div class="team-dashboard-section">
-        <div class="cyber-header">
-    <div class="header-main">
-        <span class="header-num">01</span>
-        <div class="header-titles">
-            <h2>СТАТИСТИКА КОМАНДЫ</h2>
-            <p>Полная история конструктора — смените команду для пересборки данных</p>
+<!-- НОВАЯ ЕДИНАЯ ШАПКА-ПАНЕЛЬ -->
+<div class="top-panel">
+    <div class="top-info">
+        <div class="breadcrumbs"><a href="/">Дашборды</a> / <span>F1 Analytics</span></div>
+        <h1>TELEMETRY DASHBOARD</h1>
+        <p>Интерактивный анализ производительности команд (1950 - 2024)</p>
+    </div>
+    
+    <div class="top-filters-wrapper">
+        <div class="filters-note">Выбор команды: нажмите для пересборки данных</div>
+        <div class="top-filters">
+            <!-- Кнопки команд с логотипами -->
+            <button class="filter-btn team-btn active" data-team="Ferrari">
+                <img src="https://upload.wikimedia.org/wikipedia/en/c/c0/Scuderia_Ferrari_Logo.svg" alt="Ferrari">
+                <div class="f-text">
+                    <b>Ferrari</b>
+                    <span>Scuderia</span>
+                </div>
+            </button>
+            <button class="filter-btn team-btn" data-team="Red Bull">
+                <img src="https://www.svgrepo.com/download/303227/redbull-logo.svg" alt="Red Bull">
+                <div class="f-text">
+                    <b>Red Bull</b>
+                    <span>Racing</span>
+                </div>
+            </button>
+            <button class="filter-btn team-btn" data-team="Mercedes">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/f/fb/Mercedes_AMG_Petronas_F1_Logo.svg" alt="Mercedes">
+                <div class="f-text">
+                    <b>Mercedes</b>
+                    <span>AMG</span>
+                </div>
+            </button>
+            <button class="filter-btn team-btn" data-team="McLaren">
+                <img src="https://liquipedia.net/commons/images/thumb/0/0e/McLaren_allmode.png/600px-McLaren_allmode.png" alt="McLaren">
+                <div class="f-text">
+                    <b>McLaren</b>
+                    <span>Racing</span>
+                </div>
+            </button>
+            <button class="filter-btn team-btn" data-team="Williams">
+                <img src="https://logos-world.net/wp-content/uploads/2026/01/Williams-F1-Team-Symbol.png" alt="Williams">
+                <div class="f-text">
+                    <b>Williams</b>
+                    <span>Racing</span>
+                </div>
+            </button>
+            <button class="filter-btn team-btn" data-team="Renault">
+                <img src="https://brandlogos.net/wp-content/uploads/2022/08/alpine_logomark-logo_brandlogos.net_pzhvz.png" alt="Renault">
+                <div class="f-text">
+                    <b>Renault</b>
+                    <span>Alpine</span>
+                </div>
+            </button>
         </div>
     </div>
-    <div class="header-badge">2026 LIVE</div>
 </div>
-
-        <!-- ОБНОВЛЕННЫЙ СЕЛЕКТОР (Alpine и Audi) -->
-        <nav class="team-selector">
-            <button class="team-btn active">Ferrari</button>
-            <button class="team-btn">Red Bull</button>
-            <button class="team-btn">Mercedes</button>
-            <button class="team-btn">McLaren</button>
-            <button class="team-btn">Williams</button>
-            <button class="team-btn">Renault</button>
-        </nav>
 
         <!-- РЯД ГЛАВНЫХ МЕТРИК -->
         <div class="team-kpi-row">

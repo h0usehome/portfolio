@@ -685,10 +685,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initDashboard();
     const teamButtons = document.querySelectorAll('.team-btn');
     teamButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        // Используем function(e) и this, чтобы всегда ловить саму кнопку, а не картинку внутри неё
+        btn.addEventListener('click', function(e) {
             teamButtons.forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            fetchTeamData(e.target.innerText); 
+            this.classList.add('active');
+            fetchTeamData(this.dataset.team); // Берем название из data-team
         });
     });
 });
