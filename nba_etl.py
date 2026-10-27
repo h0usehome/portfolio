@@ -95,29 +95,23 @@ def get_client() -> Client:
 
 
 # ---------------------------------------------------------------- вспомогательные функции
-def get(url: str, retries: int = 3):
+def get(url: str, retries: int = 3) -> requests.Response:
+    """GET с общей паузой между запросами, без долгих ожиданий при блокировках."""
     global _last_request
     for attempt in range(retries):
         wait = PAUSE - (time.time() - _last_request)
         if wait > 0:
             time.sleep(wait)
-            
-        # Обновляем профиль маскировки на более актуальный
-        r = curl_requests.get(url, impersonate="chrome120", timeout=30)
-        
+        r = requests.get(url, headers=HEADERS, timeout=30)
         _last_request = time.time()
         
-        # Добавляем 403 ошибку в условия ретрая
-        if r.status_code in (429, 403):
-            delay = 60 * (attempt + 1)
-            print(f'  {r.status_code} Blocked, жду {delay} с...')
-            time.sleep(delay)
-            continue
+        # Если прилетел 403 (блок) или 429 (лимит), сразу падаем без ожидания
+        if r.status_code in (403, 429):
+            raise RuntimeError(f'Доступ заблокирован ({r.status_code}). Ждать бесполезно.')
             
         r.raise_for_status()
         return r
     raise RuntimeError(f'Не удалось получить {url}')
-
 def to_num(x, default: float = 0.0) -> float:
     """Одно значение -> число. NaN и мусор превращаются в default."""
     v = pd.to_numeric(x, errors='coerce')
