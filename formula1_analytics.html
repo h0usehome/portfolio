@@ -9,6 +9,9 @@
     
     <!-- Подключаем стили -->
     <link rel="stylesheet" href="assets/css/formula1_analytics.css">
+    <link rel="stylesheet" href="assets/css/f1.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/sport.css">
     
     <!-- 1. Supabase JS Client (для работы с БД) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -20,6 +23,21 @@
     
 </head>
 <body>
+
+<header class="top">
+  <div class="w">
+    <a class="logo" href="index.html">Bogdan<span>.data</span></a>
+    <nav class="nav" aria-label="Основное меню">
+      <a href="index.html#about">Обо мне</a>
+      <a href="index.html#dashboards">Дашборды</a>
+      <a href="index.html#skills">Навыки</a>
+      <a href="index.html#contacts">Контакты</a>
+    </nav>
+    <a class="btn" href="index.html#dashboards" style="border-color:var(--ac);color:var(--ac)">Все дашборды</a>
+  </div>
+</header>
+
+
 <!-- НОВАЯ ЕДИНАЯ ШАПКА-ПАНЕЛЬ -->
 <div class="top-panel">
     <div class="top-info">
@@ -33,7 +51,7 @@
         <div class="top-filters">
             <!-- Кнопки команд с логотипами -->
             <button class="filter-btn team-btn active" data-team="Ferrari">
-                <img src="https://upload.wikimedia.org/wikipedia/en/c/c0/Scuderia_Ferrari_Logo.svg" alt="Ferrari">
+                <img src="https://thumb.wikimedia.org/wikipedia/sco/thumb/d/d1/Ferrari-Logo.svg/960px-Ferrari-Logo.svg.png?utm_source=sco.wikipedia.org&utm_campaign=index&utm_content=thumbnail&_=20150601144908" alt="Ferrari">
                 <div class="f-text">
                     <b>Ferrari</b>
                     <span>Scuderia</span>
@@ -47,14 +65,14 @@
                 </div>
             </button>
             <button class="filter-btn team-btn" data-team="Mercedes">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/f/fb/Mercedes_AMG_Petronas_F1_Logo.svg" alt="Mercedes">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/Mercedes-Benz_Star.svg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original" alt="Mercedes">
                 <div class="f-text">
                     <b>Mercedes</b>
                     <span>AMG</span>
                 </div>
             </button>
             <button class="filter-btn team-btn" data-team="McLaren">
-                <img src="https://liquipedia.net/commons/images/thumb/0/0e/McLaren_allmode.png/600px-McLaren_allmode.png" alt="McLaren">
+                <img src="https://r2.thesportsdb.com/images/media/team/badge/kzqi7v1743602056.png" alt="McLaren">
                 <div class="f-text">
                     <b>McLaren</b>
                     <span>Racing</span>
