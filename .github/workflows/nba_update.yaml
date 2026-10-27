@@ -31,12 +31,10 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          # Вычисляем вчерашнюю дату в формате YYYY-MM-DD
-          YESTERDAY=$(date -d "yesterday" +%Y-%m-%d)
+          # Универсальное вычисление даты через Python (работает на Mac, Linux и Windows)
+          YESTERDAY=$(python3 -c "from datetime import date, timedelta; print(date.today() - timedelta(days=1))")
           echo "Updating games for date: $YESTERDAY"
           
-          # Запускаем скрипт с вычисленной датой
+          # Запускаем скрипт
           python3 nba_etl.py games --date $YESTERDAY
-          
-          # Запускаем обновление новостей
           python3 nba_etl.py news
