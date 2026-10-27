@@ -1085,3 +1085,38 @@ header#top .header-desc {
 }
 
 
+
+
+
+/* Делаем главную шапку на всю ширину экрана */
+header.top.full-width-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px; /* Отступы по бокам */
+    min-height: 68px;
+    background: #0A0A0C; /* Делаем её непрозрачной, как на скриншоте */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Увеличиваем кнопки-селекторы команд */
+.filter-btn {
+    padding: 10px 18px; /* Увеличили внутренние отступы (было 8px 14px) */
+    min-width: 160px;   /* Сделали их шире (было 140px) */
+    gap: 14px;          /* Отодвинули текст от картинки */
+}
+
+.filter-btn img {
+    width: 32px !important;  /* Увеличили логотипы (было 28px) */
+    height: 32px !important;
+    min-width: 32px;
+    max-width: 32px;
+}
+
+.f-text b {
+    font-size: 15px; /* Увеличили название команды (было 13px) */
+}
+
+.f-text span {
+    font-size: 11px; /* Чуть увеличили подпись (было 10px) */
+}

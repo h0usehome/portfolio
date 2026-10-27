@@ -79,8 +79,8 @@ h2 { margin: 0 0 22px; font-size: 30px; line-height: 1.2; font-weight: 600; }
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    width: 100%;
 }
+
 .top .w { display: flex; align-items: center; justify-content: space-between; min-height: 68px; gap: 16px; }
 .logo { font-weight: 600; font-size: 18px; white-space: nowrap; }
 .logo span { color: var(--ac); }
