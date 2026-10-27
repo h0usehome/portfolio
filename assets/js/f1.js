@@ -1,17 +1,5 @@
 'use strict';
 
-const DRIVER_PHOTOS = {
-  'VER': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png',
-  'LEC': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png',
-  'NOR': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png',
-  'HAM': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LEWHAM01_Lewis_Hamilton/lewham01.png',
-  'ANT': 'https://media.formula1.com/image/upload/f_auto/q_auto/v1706264716/fom-website/2023/Miscellaneous/andrea-kimi-antonelli-portrait-1.png',
-  'PIA': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png',
-  'RUS': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png',
-  'SAI': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png',
-  'ALO': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/F/FERALO01_Fernando_Alonso/feralo01.png'
-};
-
 /* ============================== Настройки ============================== */
 const CFG = {
   url: 'https://xqqeiigpamtegingzjda.supabase.co',
@@ -267,15 +255,20 @@ function renderHead() {
   
   const box = $('#results'); box.replaceChildren();
   
-  // Кнопка "Все пилоты"
   const all = h('button', { type: 'button', class: 'chip-game all', 'aria-pressed': !isFiltered(), text: 'Все пилоты' });
   all.onclick = () => setFilter({ team: 'all', driver: 'all' }); 
   box.append(all);
 
+  // Ищем фотки во всех загруженных массивах (Топ гонки, Зачет, Результаты)
+  const dbPhotos = {};
+  [...state.top, ...state.standings, ...state.results].forEach(p => {
+    if (p.driver_id && p.photo_url) dbPhotos[p.driver_id] = p.photo_url;
+  });
+
   // Выводим ТОП-5 пилотов в шапку
   state.results.filter((x) => x.position && x.position <= 5).forEach((x) => {
-    // Подставляем фото из базы, либо из нашего словаря DRIVER_PHOTOS
-    const photo = x.photo_url || DRIVER_PHOTOS[x.code];
+    // Берем фото из нашей собранной коллекции dbPhotos
+    const photo = dbPhotos[x.driver_id] || x.photo_url;
     
     const avatar = photo 
       ? h('img', { class: 'avatar sm', src: photo, alt: x.code, loading: 'lazy' }) 
@@ -357,7 +350,7 @@ function renderLeft() {
       li.append(h('span', { class: 'rank', text: i + 1 }));
       
       // 2. Аватарка или инициалы
-      const photo = p.photo_url || DRIVER_PHOTOS[p.code];
+      const photo = p.photo_url ;
     if (photo) {
       li.append(h('img', { class: 'avatar', src: photo, alt: p.driver_name, loading: 'lazy' }));
     } else {
