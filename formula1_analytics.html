@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>F1 Analytics Dashboard</title>
-    <link rel="icon" href="data:,">
+    <!-- Иконка во вкладку -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>">
     
     <!-- Подключаем стили -->
     <link rel="stylesheet" href="assets/css/formula1_analytics.css">
@@ -19,11 +20,11 @@
     
 </head>
 <body>
-<header class="main-header glass-panel">
-    <div>
-        <h1>F1 <span>TELEMETRY</span> DASHBOARD</h1>
-        <p>Интерактивный анализ исторической производительности команд (1950 - 2024)</p>
-    </div>
+<!-- Новая шапка в едином стиле -->
+<header id="top">
+    <a href="/" class="nav-back"><span>←</span> Назад</a>
+    <h1>F1 <span>TELEMETRY</span> DASHBOARD</h1>
+    <div class="header-desc">Интерактивный анализ исторической производительности команд (1950 - 2024)</div>
 </header>
 
     <!-- БЛОК СТАТИСТИКИ КОМАНД -->

@@ -24,15 +24,6 @@ body {
     background: rgba(255, 255, 255, 0.4); 
 }
 
-header h1 {
-    text-align: center;
-    color: #ffffff;
-    text-transform: uppercase;
-    letter-spacing: 4px;
-    font-weight: 300;
-    margin-bottom: 40px;
-    text-shadow: 0 0 15px rgba(255, 24, 1, 0.5); /* Легкое свечение */
-}
 
 /* Сетка дашборда */
 .dashboard-grid {
@@ -841,29 +832,51 @@ select:hover {
     font-size: 10px;
 }
 
-
-/* Главная шапка */
-.main-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 40px;
-    padding: 20px 30px;
+/* Обновленная шапка в стиле F1/NBA */
+header#top {
+    position: relative;
+    padding: 24px 0 16px 0;
+    margin-bottom: 30px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: transparent;
 }
 
-.main-header h1 {
+header#top .nav-back {
+    position: absolute;
+    top: 24px;
+    left: 0;
+    color: #8a8a9d;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+header#top .nav-back:hover {
+    color: #fff;
+}
+
+header#top h1 {
     margin: 0;
+    color: #fff;
     font-size: 28px;
     font-weight: 800;
     letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: none;
 }
 
-.main-header h1 span {
-    color: #e10600; /* Акцентный красный */
+header#top h1 span {
+    color: #FF1801;
 }
 
-.main-header p {
-    margin: 5px 0 0 0;
+header#top .header-desc {
+    margin-top: 8px;
     color: #8a8a9d;
     font-size: 14px;
 }
