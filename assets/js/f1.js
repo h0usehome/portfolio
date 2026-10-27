@@ -1,5 +1,17 @@
 'use strict';
 
+const DRIVER_PHOTOS = {
+  'VER': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png',
+  'LEC': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png',
+  'NOR': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png',
+  'HAM': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LEWHAM01_Lewis_Hamilton/lewham01.png',
+  'ANT': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/K/KIMANT01_Kimi_Antonelli/kimant01.png',
+  'PIA': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png',
+  'RUS': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png',
+  'SAI': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png',
+  'ALO': 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/F/FERALO01_Fernando_Alonso/feralo01.png'
+};
+
 /* ============================== Настройки ============================== */
 const CFG = {
   url: 'https://xqqeiigpamtegingzjda.supabase.co',
@@ -260,19 +272,19 @@ function renderHead() {
   all.onclick = () => setFilter({ team: 'all', driver: 'all' }); 
   box.append(all);
 
-  // Выводим ТОП-5 пилотов в шапку (вместо 3)
+  // Выводим ТОП-5 пилотов в шапку
   state.results.filter((x) => x.position && x.position <= 5).forEach((x) => {
-    // Если есть фото, берем его, иначе инициалы
-    const avatar = x.photo_url 
-      ? h('img', { class: 'avatar sm', src: x.photo_url, alt: x.code, loading: 'lazy' }) 
+    // Подставляем фото из базы, либо из нашего словаря DRIVER_PHOTOS
+    const photo = x.photo_url || DRIVER_PHOTOS[x.code];
+    
+    const avatar = photo 
+      ? h('img', { class: 'avatar sm', src: photo, alt: x.code, loading: 'lazy' }) 
       : h('div', { class: 'avatar sm initials', text: x.code || '?' });
       
-    // Если есть логотип команды, берем его, иначе цветную точку
     const teamLogo = x.team_logo 
       ? h('img', { class: 'tlogo', src: x.team_logo, alt: x.team }) 
       : dot(teamColor(x.team));
 
-    // Собираем 2 строки внутри плашки: (Фото + Позиция + Имя) и (Логотип + Команда)
     const r1 = h('div', { class: 'tm' }, avatar, h('b', { text: `P${x.position}` }), h('span', { class: 'ab', text: x.code }));
     const r2 = h('div', { class: 'tm lose' }, teamLogo, h('span', { class: 'ab', text: x.team }));
 
@@ -345,12 +357,13 @@ function renderLeft() {
       li.append(h('span', { class: 'rank', text: i + 1 }));
       
       // 2. Аватарка или инициалы
-      if (p.photo_url) {
-        li.append(h('img', { class: 'avatar', src: p.photo_url, alt: p.driver_name, loading: 'lazy' }));
-      } else {
-        const init = p.code || (p.driver_name ? p.driver_name.substring(0, 3).toUpperCase() : '???');
-        li.append(h('div', { class: 'avatar initials', text: init }));
-      }
+      const photo = p.photo_url || DRIVER_PHOTOS[p.code];
+    if (photo) {
+      li.append(h('img', { class: 'avatar', src: photo, alt: p.driver_name, loading: 'lazy' }));
+    } else {
+      const init = p.code || (p.driver_name ? p.driver_name.substring(0, 3).toUpperCase() : '???');
+      li.append(h('div', { class: 'avatar initials', text: init }));
+    }
 
       // 3. Плашка команды: используем team_logo если есть, иначе цветной квадратик
       const teamName = p.constructor_name || p.team || '';
