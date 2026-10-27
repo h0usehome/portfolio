@@ -975,6 +975,7 @@ header#top .header-desc {
     padding: 20px 30px;
     margin-bottom: 30px;
     gap: 30px;
+    margin-top: 30px;
 }
 
 .top-info {
@@ -1082,3 +1083,5 @@ header#top .header-desc {
     font-size: 10px;
     text-transform: uppercase;
 }
+
+
