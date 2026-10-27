@@ -832,19 +832,19 @@ select:hover {
     font-size: 10px;
 }
 
-/* Обновленная шапка в стиле F1/NBA */
+/* Обновленная шапка в стиле F1/NBA (Исправленная) */
 header#top {
-    position: relative;
-    padding: 24px 0 16px 0;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0 20px 0;
     margin-bottom: 30px;
     border-bottom: 1px solid rgba(255,255,255,0.05);
     background: transparent;
 }
 
 header#top .nav-back {
-    position: absolute;
-    top: 24px;
-    left: 0;
+    align-self: flex-start;
+    margin-bottom: 16px; /* Отступ вниз до заголовка */
     color: #8a8a9d;
     text-decoration: none;
     font-size: 14px;
