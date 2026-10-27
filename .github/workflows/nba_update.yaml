@@ -1,0 +1,42 @@
+name: Update NBA Dashboard
+
+on:
+  schedule:
+    # Запуск каждый день в 09:00 по UTC (12:00 по Москве)
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Кнопка для ручного запуска
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Здесь добавлена библиотека lxml, которую требует pandas в nba_etl.py, а также curl_cffi
+          pip install requests supabase pandas bs4 lxml curl_cffi python-dotenv
+
+      - name: Run NBA ETL (Yesterday's Games & News)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          # Вычисляем вчерашнюю дату в формате YYYY-MM-DD
+          YESTERDAY=$(date -d "yesterday" +%Y-%m-%d)
+          echo "Updating games for date: $YESTERDAY"
+          
+          # Запускаем скрипт с вычисленной датой
+          python3 nba_etl.py games --date $YESTERDAY
+          
+          # Запускаем обновление новостей
+          python3 nba_etl.py news
