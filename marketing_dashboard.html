@@ -1401,18 +1401,20 @@ code {
 
       <div style="margin-top: 18px;">
         <div class="chart-title" style="font-size:12px; margin-bottom: 10px;">Формулы расчёта LTV</div>
-        <div class="code-block">
-<span class="cm">-- LTV = ARPU × Gross Margin × Lifetime</span>
-<span class="kw">SELECT</span>
-  user_id,
-  <span class="fn">AVG</span>(order_value) <span class="kw">AS</span> arpu,
-  <span class="num">0.68</span> <span class="kw">AS</span> gross_margin,
-  (<span class="num">1</span> / churn_rate) <span class="kw">AS</span> lifetime,
-  arpu * gross_margin * (<span class="num">1</span>/churn_rate) <span class="kw">AS</span> ltv
-<span class="kw">FROM</span> orders o
-<span class="kw">JOIN</span> users u <span class="kw">ON</span> o.user_id = u.id
-<span class="kw">GROUP BY</span> user_id
-        </div>
+
+        <pre><code class="language-sql">-- LTV = APRU x Gross Margin x Lifetime
+          SELECT
+            user_id,
+            AVG(order_value) AS apru,
+            0.68 AS gross_margin,
+            (1 / churn_rate) AS lifetime,
+            arpu * gross_margin * (1 / churn_rate) AS ltv
+              FROM orders o
+              JOIN users u ON o.user_id = u.id
+              GROUP BY user_id</code></pre>
+        
+
+
         <pre><code class="language-sql">-- Retention D1 / D7 / D30
 SELECT 
     cohort_date, 
