@@ -1409,9 +1409,9 @@ code {
             0.68 AS gross_margin,
             (1 / churn_rate) AS lifetime,
             arpu * gross_margin * (1 / churn_rate) AS ltv
-              FROM orders o
-              JOIN users u ON o.user_id = u.id
-              GROUP BY user_id</code></pre>
+          FROM orders o
+          JOIN users u ON o.user_id = u.id
+          GROUP BY user_id</code></pre>
         
 
 
