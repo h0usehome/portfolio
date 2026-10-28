@@ -230,6 +230,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-bottom: 15px;
   }
 
   .section-title::after {
@@ -1049,6 +1050,24 @@
     text-align: center;
     margin-bottom: 3px;
   }
+
+pre {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto; /* Скролл для неразрывных строк */
+    white-space: pre-wrap; /* Мягкий перенос текста, чтобы не ломать ширину карточки */
+    margin-bottom: 16px;
+}
+
+code {
+    font-family: var(--mono, 'IBM Plex Mono', monospace);
+    font-size: 13px;
+    color: #8a8a9d;
+    line-height: 1.6;
+}
+
 </style>
 </head>
 <body>
@@ -1392,19 +1411,14 @@
 <span class="kw">JOIN</span> users u <span class="kw">ON</span> o.user_id = u.id
 <span class="kw">GROUP BY</span> user_id
         </div>
-        <div class="code-block">
-<span class="cm">-- Retention D1 / D7 / D30</span>
-<span class="kw">SELECT</span>
-  cohort_date,
-  <span class="fn">COUNT_IF</span>(days_since_first = <span class="num">1</span>) * <span class="num">100.0</span>
-    / <span class="fn">COUNT</span>(user_id) <span class="kw">AS</span> ret_d1,
-  <span class="fn">COUNT_IF</span>(days_since_first = <span class="num">7</span>) * <span class="num">100.0</span>
-    / <span class="fn">COUNT</span>(user_id) <span class="kw">AS</span> ret_d7,
-  <span class="fn">COUNT_IF</span>(days_since_first = <span class="num">30</span>) * <span class="num">100.0</span>
-    / <span class="fn">COUNT</span>(user_id) <span class="kw">AS</span> ret_d30
-<span class="kw">FROM</span> user_sessions
-<span class="kw">GROUP BY</span> cohort_date
-        </div>
+        <pre><code class="language-sql">-- Retention D1 / D7 / D30
+SELECT 
+    cohort_date, 
+    COUNT_IF(days_since_first = 1) * 100.0 / COUNT(user_id) AS ret_d1, 
+    COUNT_IF(days_since_first = 7) * 100.0 / COUNT(user_id) AS ret_d7, 
+    COUNT_IF(days_since_first = 30) * 100.0 / COUNT(user_id) AS ret_d30 
+FROM user_sessions 
+GROUP BY cohort_date;</code></pre>
       </div>
     </div>
 
@@ -1419,51 +1433,39 @@
         <div class="tech-card-icon" style="background:rgba(77,124,255,0.15)">🗄️</div>
         SQL-запросы для KPI-метрик
       </div>
-      <div class="code-block">
-<span class="cm">-- ROAS = Revenue / Ad Spend</span>
-<span class="kw">SELECT</span>
-  channel,
-  <span class="fn">SUM</span>(revenue) <span class="kw">AS</span> total_revenue,
-  <span class="fn">SUM</span>(ad_spend) <span class="kw">AS</span> total_spend,
-  <span class="fn">SUM</span>(revenue) / <span class="fn">NULLIF</span>(<span class="fn">SUM</span>(ad_spend),<span class="num">0</span>)
-    <span class="kw">AS</span> roas
-<span class="kw">FROM</span> campaign_metrics
-<span class="kw">WHERE</span> date <span class="kw">BETWEEN</span> :start_date <span class="kw">AND</span> :end_date
-<span class="kw">GROUP BY</span> channel
-      </div>
-      <div class="code-block">
-<span class="cm">-- CAC = Ad Spend / New Customers</span>
-<span class="kw">SELECT</span>
-  c.channel,
-  <span class="fn">SUM</span>(c.ad_spend) /
-    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> u.user_id) <span class="kw">AS</span> cac
-<span class="kw">FROM</span> campaigns c
-<span class="kw">JOIN</span> users u
-  <span class="kw">ON</span> c.channel = u.acquisition_channel
-  <span class="kw">AND</span> u.is_new_customer = <span class="num">1</span>
-<span class="kw">GROUP BY</span> c.channel
-      </div>
-      <div class="code-block">
-<span class="cm">-- CPL = Spend / Leads</span>
-<span class="kw">SELECT</span>
-  channel,
-  campaign_id,
-  <span class="fn">SUM</span>(spend) / <span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(lead_id),<span class="num">0</span>)
-    <span class="kw">AS</span> cpl
-<span class="kw">FROM</span> ad_leads
-<span class="kw">GROUP BY</span> <span class="num">1</span>,<span class="num">2</span>
-<span class="kw">ORDER BY</span> cpl <span class="kw">ASC</span>
-      </div>
-      <div class="code-block">
-<span class="cm">-- CTR = Clicks / Impressions</span>
-<span class="kw">SELECT</span>
-  channel,
-  <span class="fn">SUM</span>(clicks)*<span class="num">100.0</span> /
-    <span class="fn">NULLIF</span>(<span class="fn">SUM</span>(impressions),<span class="num">0</span>) <span class="kw">AS</span> ctr_pct
-<span class="kw">FROM</span> ad_stats
-<span class="kw">WHERE</span> date >= <span class="fn">CURRENT_DATE</span> - <span class="kw">INTERVAL</span> <span class="str">'30 days'</span>
-<span class="kw">GROUP BY</span> channel
-      </div>
+      <pre><code class="language-sql">-- ROAS = Revenue / Ad Spend
+SELECT 
+    channel, 
+    SUM(revenue) AS total_revenue, 
+    SUM(ad_spend) AS total_spend, 
+    SUM(revenue) / NULLIF(SUM(ad_spend), 0) AS roas 
+FROM campaign_metrics 
+WHERE date BETWEEN :start_date AND :end_date 
+GROUP BY channel;</code></pre>
+      <pre><code class="language-sql">-- CAC = Ad Spend / New Customers
+SELECT 
+    c.channel, 
+    SUM(c.ad_spend) / COUNT(DISTINCT u.user_id) AS cac 
+FROM campaigns c 
+JOIN users u 
+    ON c.channel = u.acquisition_channel 
+    AND u.is_new_customer = 1 
+GROUP BY c.channel;</code></pre>
+      <pre><code class="language-sql">-- CPL = Spend / Leads
+SELECT 
+    channel, 
+    campaign_id, 
+    SUM(spend) / NULLIF(COUNT(lead_id), 0) AS cpl 
+FROM ad_leads 
+GROUP BY 1, 2 
+ORDER BY cpl ASC;</code></pre>
+      <pre><code class="language-sql">-- CTR = Clicks / Impressions
+SELECT 
+    channel, 
+    SUM(clicks) * 100.0 / NULLIF(SUM(impressions), 0) AS ctr_pct 
+FROM ad_stats 
+WHERE date >= CURRENT_DATE - INTERVAL '30 days' 
+GROUP BY channel;</code></pre>
     </div>
 
     <div class="tech-card">
