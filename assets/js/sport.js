@@ -146,16 +146,10 @@ const gy2px = (y) => (y - VIEW.y0) * SCALE;
 
 /** Подгоняет видимую область под данные: бросок у края или за линией не должен обрезаться. */
 function fitView(shots) {
-  let x0 = 0, x1 = COURT.w, y0 = 0, y1 = COURT.h;
-  for (const s of shots) {
-    const x = num(s.coord_x), y = num(s.coord_y);
-    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
-  }
-  const pad = 28, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  x0 = clamp(Math.floor(x0 - pad), -140, -pad); x1 = clamp(Math.ceil(x1 + pad), COURT.w + pad, COURT.w + 140);
-  y0 = clamp(Math.floor(y0 - pad), -100, -pad); y1 = clamp(Math.ceil(y1 + pad), COURT.h + pad, COURT.h + 140);
-  Object.assign(VIEW, { x0, y0, w: x1 - x0, h: y1 - y0 });
-  canvas.width = Math.round(VIEW.w * SCALE); canvas.height = Math.round(VIEW.h * SCALE);
+  // Жестко фиксируем симметричную площадку 500x470 с небольшими рамками 28px по краям
+  Object.assign(VIEW, { x0: -28, y0: -28, w: COURT.w + 56, h: COURT.h + 56 });
+  canvas.width = Math.round(VIEW.w * SCALE); 
+  canvas.height = Math.round(VIEW.h * SCALE);
   $('#court').style.setProperty('--ar', (VIEW.w / VIEW.h).toFixed(4));
   $('#court svg').setAttribute('viewBox', `${VIEW.x0} ${VIEW.y0} ${VIEW.w} ${VIEW.h}`);
 }
